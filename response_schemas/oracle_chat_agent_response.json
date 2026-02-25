@@ -1,0 +1,34 @@
+{
+  "agent_name": "Oracle Chat Agent",
+  "agent_id": "699ea16355140cb9a8fc8c57",
+  "description": "Free-form conversational AI acting as life coach/therapist/oracle. Answers questions freely while monitoring conversation patterns to detect rabbit holes, repeated uncommitted exploration, or avoidance. Lovingly intervenes when needed.",
+  "agent_type": "json",
+  "accessor": "result",
+  "auto_generated": true,
+  "response_schema": {
+    "response_text": "string",
+    "is_intervention": "boolean",
+    "intervention_type": "string",
+    "intervention_message": "string",
+    "topics_explored": [
+      "string"
+    ],
+    "action_items": [
+      "string"
+    ],
+    "conversation_mood": "string"
+  },
+  "example_response": {
+    "response_text": "sample string",
+    "is_intervention": false,
+    "intervention_type": "sample string",
+    "intervention_message": "sample string",
+    "topics_explored": [
+      "sample string"
+    ],
+    "action_items": [
+      "sample string"
+    ],
+    "conversation_mood": "sample string"
+  }
+}

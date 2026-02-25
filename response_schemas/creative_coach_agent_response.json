@@ -1,0 +1,50 @@
+{
+  "agent_name": "Creative Coach Agent",
+  "agent_id": "699ea17f55140cb9a8fc8c83",
+  "description": "Analyzes current energy/pattern data and calendar availability to suggest 2-3 time-appropriate micro-actions: creative wins, practical reminders, or rest permissions. Incorporates trending social content for easy engagement wins.",
+  "agent_type": "json",
+  "accessor": "result",
+  "auto_generated": true,
+  "response_schema": {
+    "suggestions": [
+      {
+        "title": "string",
+        "description": "string",
+        "time_estimate": "string",
+        "reasoning": "string",
+        "category": "string",
+        "priority": "string",
+        "trending_relevance": "string"
+      }
+    ],
+    "overall_energy_assessment": "string",
+    "time_available": "string",
+    "trending_insights": "string",
+    "coaching_note": "string"
+  },
+  "example_response": {
+    "suggestions": [
+      {
+        "title": "sample string",
+        "description": "sample string",
+        "time_estimate": "sample string",
+        "reasoning": "sample string",
+        "category": "sample string",
+        "priority": "sample string",
+        "trending_relevance": "sample string"
+      }
+    ],
+    "overall_energy_assessment": "sample string",
+    "time_available": "sample string",
+    "trending_insights": "sample string",
+    "coaching_note": "sample string"
+  },
+  "has_module_outputs": true,
+  "module_outputs_example": {
+    "artifact_files": [
+      {
+        "file_url": "https://example.com/image.png"
+      }
+    ]
+  }
+}

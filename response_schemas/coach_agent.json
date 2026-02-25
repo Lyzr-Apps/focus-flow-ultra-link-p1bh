@@ -1,0 +1,51 @@
+{
+  "agent_name": "Creative Coach Agent",
+  "agent_id": "699ea17f55140cb9a8fc8c83",
+  "description": "Analyzes current energy/pattern data and calendar availability to suggest 2-3 time-appropriate micro-actions: creative wins, practical reminders, or rest permissions. Incorporates trending social content for easy engagement wins.",
+  "agent_type": "json",
+  "accessor": "json",
+  "has_module_outputs": false,
+  "response_schema": {
+    "suggestions": [
+      {
+        "title": "string",
+        "description": "string",
+        "time_estimate": "string",
+        "reasoning": "string",
+        "category": "string",
+        "priority": "string",
+        "trending_relevance": "string"
+      }
+    ],
+    "overall_energy_assessment": "string",
+    "time_available": "string",
+    "trending_insights": "string",
+    "coaching_note": "string"
+  },
+  "example_response": {
+    "suggestions": [
+      {
+        "title": "Post your bass reel from Tuesday",
+        "description": "You recorded a great 30-second bass riff on Tuesday. Post it as a Reel with trending audio.",
+        "time_estimate": "15 minutes",
+        "reasoning": "Short-form music content is trending +30% this week, and your energy is moderate - perfect for a quick win.",
+        "category": "creative_win",
+        "priority": "high",
+        "trending_relevance": "Music reels engagement up 30% this week on Instagram"
+      },
+      {
+        "title": "Check bank account balance",
+        "description": "Quick practical task - review your account before end of day.",
+        "time_estimate": "5 minutes",
+        "reasoning": "Low-energy practical task that clears mental load.",
+        "category": "practical_reminder",
+        "priority": "medium",
+        "trending_relevance": "N/A"
+      }
+    ],
+    "overall_energy_assessment": "Moderate energy - good for quick creative tasks, avoid deep work",
+    "time_available": "2 hours free between 2pm-4pm",
+    "trending_insights": "Short-form music content seeing 30% engagement boost this week",
+    "coaching_note": "You've been productive this week. One quick creative win today keeps the momentum going."
+  }
+}

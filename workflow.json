@@ -1,0 +1,42 @@
+{
+  "nodes": [
+    {
+      "id": "input_node",
+      "type": "Input",
+      "label": "User Input",
+      "nodeCategory": "input"
+    },
+    {
+      "id": "checkin_agent",
+      "type": "Agent",
+      "label": "Check-In & Pattern Agent",
+      "nodeCategory": "agent"
+    },
+    {
+      "id": "coach_agent",
+      "type": "Agent",
+      "label": "Creative Coach Agent",
+      "nodeCategory": "agent"
+    },
+    {
+      "id": "oracle_agent",
+      "type": "Agent",
+      "label": "Oracle Chat Agent",
+      "nodeCategory": "agent"
+    }
+  ],
+  "edges": [
+    {
+      "source": "input_node",
+      "target": "checkin_agent"
+    },
+    {
+      "source": "input_node",
+      "target": "coach_agent"
+    },
+    {
+      "source": "input_node",
+      "target": "oracle_agent"
+    }
+  ]
+}

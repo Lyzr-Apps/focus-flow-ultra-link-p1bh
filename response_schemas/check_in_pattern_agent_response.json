@@ -1,0 +1,50 @@
+{
+  "agent_name": "Check-In & Pattern Agent",
+  "agent_id": "699ea162006f1f9bd420ce52",
+  "description": "Guides daily structured check-in (sleep, energy, caffeine, alcohol, meds, intimacy, creative/practical time). Detects patterns across multi-day data. Manages streak/HP gamification. Delivers motivational reframes or tough-love interventions.",
+  "agent_type": "json",
+  "accessor": "result",
+  "auto_generated": true,
+  "response_schema": {
+    "streak_count": "number",
+    "hp_value": "number",
+    "hp_max": "number",
+    "shield_count": "number",
+    "energy_level": "number",
+    "sleep_quality": "number",
+    "caffeine_intake": "number",
+    "creative_time_minutes": "number",
+    "practical_time_minutes": "number",
+    "pattern_insights": [
+      {
+        "pattern": "string",
+        "severity": "string",
+        "recommendation": "string"
+      }
+    ],
+    "motivational_message": "string",
+    "stats_summary": "string",
+    "mood_assessment": "string"
+  },
+  "example_response": {
+    "streak_count": 0,
+    "hp_value": 0,
+    "hp_max": 0,
+    "shield_count": 0,
+    "energy_level": 0,
+    "sleep_quality": 0,
+    "caffeine_intake": 0,
+    "creative_time_minutes": 0,
+    "practical_time_minutes": 0,
+    "pattern_insights": [
+      {
+        "pattern": "sample string",
+        "severity": "sample string",
+        "recommendation": "sample string"
+      }
+    ],
+    "motivational_message": "sample string",
+    "stats_summary": "sample string",
+    "mood_assessment": "sample string"
+  }
+}

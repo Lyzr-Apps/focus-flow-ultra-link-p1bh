@@ -1,0 +1,47 @@
+{
+  "app_name": "FlowState AI Life Coach",
+  "agents": {
+    "checkin_agent": {
+      "agent_id": "699ea162006f1f9bd420ce52",
+      "name": "Check-In & Pattern Agent",
+      "provider": "openai",
+      "model": "gpt-4.1",
+      "temperature": 0.5,
+      "top_p": 0.95,
+      "has_tools": false,
+      "has_image_output": false,
+      "has_voice": false,
+      "has_file_output": false
+    },
+    "coach_agent": {
+      "agent_id": "699ea17f55140cb9a8fc8c83",
+      "name": "Creative Coach Agent",
+      "provider": "perplexity",
+      "model": "sonar-pro",
+      "temperature": 0.6,
+      "top_p": 0.95,
+      "has_tools": true,
+      "tools": ["GOOGLECALENDAR_LIST_EVENTS", "GOOGLECALENDAR_FIND_FREE_SLOTS"],
+      "has_image_output": false,
+      "has_voice": false,
+      "has_file_output": false
+    },
+    "oracle_agent": {
+      "agent_id": "699ea16355140cb9a8fc8c57",
+      "name": "Oracle Chat Agent",
+      "provider": "openai",
+      "model": "gpt-4.1",
+      "temperature": 0.6,
+      "top_p": 0.95,
+      "has_tools": false,
+      "has_image_output": false,
+      "has_voice": false,
+      "has_file_output": false
+    }
+  },
+  "agent_ids": [
+    "699ea162006f1f9bd420ce52",
+    "699ea17f55140cb9a8fc8c83",
+    "699ea16355140cb9a8fc8c57"
+  ]
+}

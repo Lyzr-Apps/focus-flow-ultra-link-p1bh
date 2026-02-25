@@ -1,0 +1,26 @@
+{
+  "agent_name": "Oracle Chat Agent",
+  "agent_id": "699ea16355140cb9a8fc8c57",
+  "description": "Free-form conversational AI acting as life coach/therapist/oracle. Answers questions freely while monitoring conversation patterns to detect rabbit holes, repeated uncommitted exploration, or avoidance. Lovingly intervenes when needed.",
+  "agent_type": "json",
+  "accessor": "json",
+  "has_module_outputs": false,
+  "response_schema": {
+    "response_text": "string",
+    "is_intervention": "boolean",
+    "intervention_type": "string",
+    "intervention_message": "string",
+    "topics_explored": ["string"],
+    "action_items": ["string"],
+    "conversation_mood": "string"
+  },
+  "example_response": {
+    "response_text": "Starting a Patreon is a solid move for musicians with an engaged audience. Here's what I'd recommend: Start with 2 tiers - a $5 'behind the scenes' tier and a $15 'exclusive content' tier. Don't overcomplicate it.",
+    "is_intervention": false,
+    "intervention_type": "none",
+    "intervention_message": "",
+    "topics_explored": ["monetization", "Patreon", "music business"],
+    "action_items": ["Set up Patreon account with 2 tiers this week", "Post announcement to existing audience"],
+    "conversation_mood": "curious and motivated"
+  }
+}
