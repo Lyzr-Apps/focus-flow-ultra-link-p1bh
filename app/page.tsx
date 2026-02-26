@@ -16,46 +16,14 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Separator } from '@/components/ui/separator'
 import {
-  FaFire,
-  FaShieldAlt,
-  FaBolt,
-  FaBed,
-  FaCoffee,
-  FaMusic,
-  FaBriefcase,
-  FaSmile,
-  FaHistory,
-  FaTrophy,
-  FaHeart,
-  FaPills,
-  FaWineGlass,
-  FaCheck,
-  FaTimes,
-  FaLightbulb,
-  FaStar,
-  FaMedal,
-  FaRocket,
-  FaMoon,
-  FaLock,
-  FaChevronDown,
-  FaChevronUp,
+  FaFire, FaShieldAlt, FaBolt, FaBed, FaCoffee, FaMusic, FaBriefcase,
+  FaSmile, FaHistory, FaTrophy, FaHeart, FaPills, FaWineGlass, FaCheck,
+  FaTimes, FaLightbulb, FaStar, FaMedal, FaRocket, FaMoon, FaLock,
+  FaChevronDown, FaChevronUp, FaSun, FaCloudSun,
 } from 'react-icons/fa'
 import {
-  Home,
-  MessageCircle,
-  Clock,
-  Loader2,
-  Send,
-  X,
-  Sparkles,
-  Shield,
-  Zap,
-  Smile,
-  ChevronRight,
-  ChevronLeft,
-  CheckCircle,
-  AlertTriangle,
-  Target,
+  Home, MessageCircle, Clock, Loader2, Send, X, Sparkles, Shield, Zap,
+  Smile, ChevronRight, ChevronLeft, CheckCircle, AlertTriangle, Target,
 } from 'lucide-react'
 
 // ============================================================
@@ -66,11 +34,28 @@ const CHECKIN_AGENT_ID = '699ea162006f1f9bd420ce52'
 const COACH_AGENT_ID = '699ea17f55140cb9a8fc8c83'
 const ORACLE_AGENT_ID = '699ea16355140cb9a8fc8c57'
 
-const STORAGE_KEY = 'flowstate_app_state'
+const STORAGE_KEY = 'creatr_app_state'
 
 // ============================================================
 // TYPES
 // ============================================================
+
+type CheckInPeriod = 'morning' | 'afternoon' | 'evening'
+
+interface DailyCheckIns {
+  date: string
+  morning: boolean
+  afternoon: boolean
+  evening: boolean
+}
+
+interface MedicationEntry {
+  name: string
+  generic: string
+  dosageMg: number
+  timeTaken: string
+  duration: { min: number; max: number }
+}
 
 interface PatternInsight {
   pattern: string
@@ -81,11 +66,12 @@ interface PatternInsight {
 interface CheckInEntry {
   id: string
   date: string
+  period: CheckInPeriod
   sleepQuality: number
   energyLevel: number
   caffeineIntake: number
   alcoholIntake: number
-  medsTaken: boolean
+  medications: MedicationEntry[]
   intimacy: boolean
   creativeTime: number
   practicalTime: number
@@ -158,7 +144,106 @@ interface AppState {
   coachingNote: string | null
   energyAssessment: string | null
   motivationalMessage: string | null
+  todayCheckIns: DailyCheckIns
 }
+
+// ============================================================
+// MEDICATION LIST
+// ============================================================
+
+const MEDICATION_LIST = [
+  { name: 'Vyvanse', generic: 'lisdexamfetamine', duration: { min: 10, max: 14 } },
+  { name: 'Dexamphetamine', generic: 'dextroamphetamine', duration: { min: 4, max: 6 } },
+  { name: 'Ritalin', generic: 'methylphenidate', duration: { min: 3, max: 4 } },
+  { name: 'Concerta', generic: 'methylphenidate ER', duration: { min: 10, max: 12 } },
+  { name: 'Adderall', generic: 'mixed amphetamine salts', duration: { min: 4, max: 6 } },
+  { name: 'Adderall XR', generic: 'mixed amphetamine salts XR', duration: { min: 10, max: 12 } },
+  { name: 'Strattera', generic: 'atomoxetine', duration: { min: 16, max: 24 } },
+  { name: 'Modafinil', generic: 'modafinil', duration: { min: 12, max: 15 } },
+  { name: 'Wellbutrin', generic: 'bupropion', duration: { min: 12, max: 24 } },
+  { name: 'Sertraline', generic: 'Zoloft', duration: { min: 24, max: 26 } },
+  { name: 'Escitalopram', generic: 'Lexapro', duration: { min: 24, max: 30 } },
+  { name: 'Melatonin', generic: 'melatonin', duration: { min: 5, max: 8 } },
+  { name: 'Magnesium', generic: 'magnesium', duration: { min: 6, max: 8 } },
+]
+
+// ============================================================
+// SLIDER DESCRIPTIONS
+// ============================================================
+
+const SLEEP_DESCRIPTIONS: Record<number, string> = {
+  1: 'Severely disrupted -- barely any sleep',
+  2: 'Very poor -- woke frequently, restless',
+  3: 'Poor -- fragmented, unrefreshing',
+  4: 'Below average -- some rest but not enough',
+  5: 'Moderate -- adequate but could improve',
+  6: 'Fair -- decent rest, some interruptions',
+  7: 'Good -- mostly solid, refreshing',
+  8: 'Very good -- deep, restorative sleep',
+  9: 'Excellent -- full cycles, woke refreshed',
+  10: 'Exceptional -- perfect, peak recovery',
+}
+
+const ENERGY_DESCRIPTIONS: Record<number, string> = {
+  1: 'Depleted -- struggling to function',
+  2: 'Very low -- heavy fatigue, brain fog',
+  3: 'Low -- sluggish, needing stimulants',
+  4: 'Below baseline -- functioning but drained',
+  5: 'Baseline -- neutral, getting by',
+  6: 'Moderate -- capable, some motivation',
+  7: 'Good -- clear-headed, productive',
+  8: 'High -- focused, creative flow accessible',
+  9: 'Very high -- sharp, motivated, in the zone',
+  10: 'Peak -- firing on all cylinders, unstoppable',
+}
+
+// ============================================================
+// MANTRAS & WORDS
+// ============================================================
+
+const MANTRAS = [
+  { quote: "Somewhere, something incredible is waiting to be known.", author: "Carl Sagan" },
+  { quote: "Either you run the day or the day runs you.", author: "Jim Rohn" },
+  { quote: "You don't have to be great to start, but you have to start to be great.", author: "Zig Ziglar" },
+  { quote: "The happiness of your life depends upon the quality of your thoughts.", author: "Marcus Aurelius" },
+  { quote: "Nothing will work unless you do.", author: "Maya Angelou" },
+  { quote: "Your time is limited, don't waste it living someone else's life.", author: "Steve Jobs" },
+  { quote: "Be water, my friend.", author: "Bruce Lee" },
+  { quote: "Imagination is more important than knowledge.", author: "Albert Einstein" },
+  { quote: "We suffer more in imagination than in reality.", author: "Seneca" },
+  { quote: "It's not what happens to you, but how you react to it that matters.", author: "Epictetus" },
+  { quote: "The wound is the place where the Light enters you.", author: "Rumi" },
+  { quote: "A journey of a thousand miles begins with a single step.", author: "Lao Tzu" },
+  { quote: "Success is not final, failure is not fatal: it is the courage to continue that counts.", author: "Winston Churchill" },
+  { quote: "What you do speaks so loudly that I cannot hear what you say.", author: "Ralph Waldo Emerson" },
+  { quote: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
+  { quote: "Knowing is not enough, we must apply. Willing is not enough, we must do.", author: "Bruce Lee" },
+  { quote: "Discipline is the bridge between goals and accomplishment.", author: "Jim Rohn" },
+  { quote: "It is not the strongest that survive, nor the most intelligent, but the most responsive to change.", author: "Charles Darwin" },
+  { quote: "The cosmos is within us. We are made of star-stuff.", author: "Carl Sagan" },
+  { quote: "People often say that motivation doesn't last. Well, neither does bathing. That's why we recommend it daily.", author: "Zig Ziglar" },
+  { quote: "If you are not willing to risk the usual, you will have to settle for the ordinary.", author: "Jim Rohn" },
+  { quote: "Absorb what is useful, discard what is useless and add what is specifically your own.", author: "Bruce Lee" },
+  { quote: "He who has a why to live can bear almost any how.", author: "Friedrich Nietzsche" },
+  { quote: "The best time to plant a tree was 20 years ago. The second best time is now.", author: "Chinese Proverb" },
+]
+
+const WORDS_OF_DAY = [
+  { word: "Eudaimonia", pronunciation: "yoo-dye-MOH-nee-uh", definition: "A Greek concept of human flourishing through living with virtue and purpose" },
+  { word: "Kairos", pronunciation: "KY-ross", definition: "The perfect, opportune moment for decisive action" },
+  { word: "Sonder", pronunciation: "SON-der", definition: "The realization that each passerby has a life as vivid and complex as your own" },
+  { word: "Ikigai", pronunciation: "ee-kee-GUY", definition: "A Japanese concept meaning 'a reason for being' -- the intersection of what you love, what you're good at, what the world needs, and what you can be paid for" },
+  { word: "Meraki", pronunciation: "meh-RAH-kee", definition: "To do something with soul, creativity, or love -- putting a piece of yourself into your work" },
+  { word: "Ubuntu", pronunciation: "oo-BOON-too", definition: "A South African philosophy meaning 'I am because we are' -- shared humanity and interconnectedness" },
+  { word: "Hygge", pronunciation: "HOO-gah", definition: "A Danish quality of cosiness and comfortable conviviality that engenders contentment" },
+  { word: "Wabi-sabi", pronunciation: "WAH-bee SAH-bee", definition: "A Japanese aesthetic centered on acceptance of imperfection and transience" },
+  { word: "Ataraxia", pronunciation: "at-uh-RAK-see-uh", definition: "A state of serene calmness and freedom from emotional disturbance or anxiety" },
+  { word: "Praxis", pronunciation: "PRAK-sis", definition: "The process of translating ideas and theory into practical action and application" },
+  { word: "Kintsukuroi", pronunciation: "kin-TSOO-koo-roy", definition: "The art of repairing broken pottery with gold, treating breakage as part of an object's history rather than something to disguise" },
+  { word: "Fernweh", pronunciation: "FERN-vay", definition: "An ache for distant places; a craving for travel and new experiences" },
+  { word: "Jouissance", pronunciation: "zhwee-SAHNS", definition: "A French term for extreme pleasure or ecstasy, often found in creative breakthroughs" },
+  { word: "Sophrosyne", pronunciation: "soh-FROS-uh-nee", definition: "An ancient Greek concept of healthy-mindedness, moderation, and self-control" },
+]
 
 // ============================================================
 // DEFAULTS
@@ -177,21 +262,18 @@ const DEFAULT_ACHIEVEMENTS: Achievement[] = [
   { id: 'chat_5', title: 'Deep Diver', description: 'Have 5+ messages with the Oracle', icon: 'message', unlocked: false },
 ]
 
+function getTodayStr(): string {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 const DEFAULT_STATE: AppState = {
-  streak: 0,
-  hp: 0,
-  hpMax: 100,
-  shields: 0,
-  lastCheckIn: null,
-  checkInHistory: [],
-  patternHistory: [],
-  suggestions: [],
-  chatMessages: [],
+  streak: 0, hp: 0, hpMax: 100, shields: 0, lastCheckIn: null,
+  checkInHistory: [], patternHistory: [], suggestions: [], chatMessages: [],
   achievements: DEFAULT_ACHIEVEMENTS,
   stats: { sleepQuality: null, energyLevel: null, caffeineIntake: null, creativeTime: null, practicalTime: null, mood: null },
-  coachingNote: null,
-  energyAssessment: null,
-  motivationalMessage: null,
+  coachingNote: null, energyAssessment: null, motivationalMessage: null,
+  todayCheckIns: { date: getTodayStr(), morning: false, afternoon: false, evening: false },
 }
 
 // ============================================================
@@ -199,31 +281,32 @@ const DEFAULT_STATE: AppState = {
 // ============================================================
 
 const SAMPLE_STATE: AppState = {
-  streak: 5,
-  hp: 72,
-  hpMax: 100,
-  shields: 2,
+  streak: 5, hp: 72, hpMax: 100, shields: 2,
   lastCheckIn: new Date().toISOString(),
   checkInHistory: [
     {
-      id: 's1', date: new Date(Date.now() - 86400000).toISOString(), sleepQuality: 7, energyLevel: 6,
-      caffeineIntake: 2, alcoholIntake: 0, medsTaken: true, intimacy: false, creativeTime: 45,
-      practicalTime: 90, moodNotes: 'Good day, felt productive', streakCount: 4, hpValue: 65,
+      id: 's1', date: new Date(Date.now() - 86400000).toISOString(), period: 'morning',
+      sleepQuality: 7, energyLevel: 6, caffeineIntake: 2, alcoholIntake: 0,
+      medications: [{ name: 'Vyvanse', generic: 'lisdexamfetamine', dosageMg: 40, timeTaken: '08:00', duration: { min: 10, max: 14 } }],
+      intimacy: false, creativeTime: 90, practicalTime: 120,
+      moodNotes: 'Good day, felt productive', streakCount: 4, hpValue: 65,
       hpMax: 100, shieldCount: 1, motivationalMessage: '4-day streak! You are building real momentum.',
-      statsSummary: 'Sleep: 7/10, Energy: 6/10, Creative: 45min', moodAssessment: 'Productive and focused',
+      statsSummary: 'Sleep: 7/10, Energy: 6/10, Creative: 1h 30m', moodAssessment: 'Productive and focused',
       patternInsights: [{ pattern: 'Energy peaks around 10am after coffee', severity: 'thriving', recommendation: 'Schedule creative work for late morning' }],
     },
     {
-      id: 's2', date: new Date(Date.now() - 172800000).toISOString(), sleepQuality: 8, energyLevel: 7,
-      caffeineIntake: 1, alcoholIntake: 1, medsTaken: true, intimacy: true, creativeTime: 60,
-      practicalTime: 30, moodNotes: 'Relaxed and creative', streakCount: 3, hpValue: 58,
+      id: 's2', date: new Date(Date.now() - 172800000).toISOString(), period: 'afternoon',
+      sleepQuality: 8, energyLevel: 7, caffeineIntake: 1, alcoholIntake: 1,
+      medications: [{ name: 'Vyvanse', generic: 'lisdexamfetamine', dosageMg: 40, timeTaken: '08:00', duration: { min: 10, max: 14 } }, { name: 'Dexamphetamine', generic: 'dextroamphetamine', dosageMg: 10, timeTaken: '14:00', duration: { min: 4, max: 6 } }],
+      intimacy: true, creativeTime: 60, practicalTime: 30,
+      moodNotes: 'Relaxed and creative', streakCount: 3, hpValue: 58,
       hpMax: 100, shieldCount: 1, motivationalMessage: 'Keep building that streak!',
-      statsSummary: 'Sleep: 8/10, Energy: 7/10, Creative: 60min', moodAssessment: 'Relaxed and happy',
-      patternInsights: [{ pattern: 'Better sleep on low-caffeine days', severity: 'thriving', recommendation: 'Keep caffeine to 1-2 cups' }],
+      statsSummary: 'Sleep: 8/10, Energy: 7/10, Creative: 1h', moodAssessment: 'Relaxed and happy',
+      patternInsights: [{ pattern: 'Better sleep on low-caffeine days', severity: 'thriving', recommendation: 'Keep caffeine to 1-2 espresso shots' }],
     },
   ],
   patternHistory: [
-    { pattern: 'Energy drops after 2+ coffees past 3pm', severity: 'watch', recommendation: 'Try switching to decaf after 2pm' },
+    { pattern: 'Energy drops after 2+ espresso shots past 3pm', severity: 'watch', recommendation: 'Try switching to decaf after 2pm' },
     { pattern: 'Creative output peaks on days with 7+ sleep', severity: 'thriving', recommendation: 'Protect your sleep for creative days' },
     { pattern: 'Mood dips after 3 days without creative time', severity: 'intervene', recommendation: 'Schedule at least 15 min of creative time daily' },
   ],
@@ -243,10 +326,11 @@ const SAMPLE_STATE: AppState = {
     if (a.id === 'hp_50') return { ...a, unlocked: true, unlockedAt: new Date(Date.now() - 86400000).toISOString() }
     return a
   }),
-  stats: { sleepQuality: 7, energyLevel: 6, caffeineIntake: 2, creativeTime: 45, practicalTime: 90, mood: 'Productive and focused' },
+  stats: { sleepQuality: 7, energyLevel: 6, caffeineIntake: 2, creativeTime: 90, practicalTime: 120, mood: 'Productive and focused' },
   coachingNote: 'You have been productive this week. One quick creative win today keeps the momentum going.',
   energyAssessment: 'Moderate energy - good for quick creative tasks, avoid deep work',
   motivationalMessage: '5-day streak! You are building real momentum. Keep showing up.',
+  todayCheckIns: { date: getTodayStr(), morning: true, afternoon: false, evening: false },
 }
 
 // ============================================================
@@ -271,18 +355,36 @@ function formatDate(dateStr: string | null | undefined): string {
   if (!dateStr) return 'N/A'
   try {
     return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-  } catch {
-    return 'N/A'
-  }
+  } catch { return 'N/A' }
 }
 
 function formatTime(dateStr: string | null | undefined): string {
   if (!dateStr) return ''
   try {
     return new Date(dateStr).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-  } catch {
-    return ''
-  }
+  } catch { return '' }
+}
+
+function formatHoursMinutes(totalMinutes: number): string {
+  const h = Math.floor(totalMinutes / 60)
+  const m = totalMinutes % 60
+  if (h === 0) return `${m}m`
+  if (m === 0) return `${h}h`
+  return `${h}h ${m}m`
+}
+
+function getCurrentPeriod(): CheckInPeriod {
+  const hour = new Date().getHours()
+  if (hour >= 6 && hour < 12) return 'morning'
+  if (hour >= 12 && hour < 18) return 'afternoon'
+  return 'evening'
+}
+
+function getDayOfYear(): number {
+  const now = new Date()
+  const start = new Date(now.getFullYear(), 0, 0)
+  const diff = now.getTime() - start.getTime()
+  return Math.floor(diff / 86400000)
 }
 
 function getSeverityColor(severity: string | undefined): string {
@@ -299,6 +401,24 @@ function getCategoryStyle(category: string | undefined): { bg: string; text: str
   if (c.includes('practical')) return { bg: 'bg-blue-500/20', text: 'text-blue-400', label: 'Practical' }
   if (c.includes('rest')) return { bg: 'bg-green-500/20', text: 'text-green-400', label: 'Rest' }
   return { bg: 'bg-muted', text: 'text-muted-foreground', label: category ?? 'General' }
+}
+
+function getMedAlerts(medications: MedicationEntry[]): { med: MedicationEntry; status: 'active' | 'wearing_off' | 'worn_off'; wearOffTime: string }[] {
+  const now = new Date()
+  return medications.map(med => {
+    const parts = med.timeTaken.split(':').map(Number)
+    const h = parts[0] ?? 0
+    const m = parts[1] ?? 0
+    const taken = new Date()
+    taken.setHours(h, m, 0, 0)
+    const wearOffMin = new Date(taken.getTime() + med.duration.min * 3600000)
+    const wearOffMax = new Date(taken.getTime() + med.duration.max * 3600000)
+    let status: 'active' | 'wearing_off' | 'worn_off' = 'active'
+    if (now >= wearOffMax) status = 'worn_off'
+    else if (now >= wearOffMin) status = 'wearing_off'
+    const wearOffTime = `${wearOffMin.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} - ${wearOffMax.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
+    return { med, status, wearOffTime }
+  })
 }
 
 function renderMarkdown(text: string) {
@@ -370,7 +490,7 @@ function StatCard({ icon, value, label, unit }: { icon: React.ReactNode; value: 
           {icon}
         </div>
         <div className="min-w-0">
-          <p className="text-lg font-bold tracking-tight text-foreground truncate">{displayVal}</p>
+          <p className="text-lg font-bold font-sans tracking-tight text-foreground truncate">{displayVal}</p>
           <p className="text-xs text-muted-foreground">{label}</p>
         </div>
       </CardContent>
@@ -380,16 +500,11 @@ function StatCard({ icon, value, label, unit }: { icon: React.ReactNode; value: 
 
 function AchievementBadge({ achievement }: { achievement: Achievement }) {
   const iconMap: Record<string, React.ReactNode> = {
-    star: <FaStar className="w-5 h-5" />,
-    fire: <FaFire className="w-5 h-5" />,
-    rocket: <FaRocket className="w-5 h-5" />,
-    palette: <FaMusic className="w-5 h-5" />,
-    moon: <FaMoon className="w-5 h-5" />,
-    shield: <FaShieldAlt className="w-5 h-5" />,
-    trophy: <FaTrophy className="w-5 h-5" />,
-    check: <FaCheck className="w-5 h-5" />,
-    message: <MessageCircle className="w-5 h-5" />,
-    medal: <FaMedal className="w-5 h-5" />,
+    star: <FaStar className="w-5 h-5" />, fire: <FaFire className="w-5 h-5" />,
+    rocket: <FaRocket className="w-5 h-5" />, palette: <FaMusic className="w-5 h-5" />,
+    moon: <FaMoon className="w-5 h-5" />, shield: <FaShieldAlt className="w-5 h-5" />,
+    trophy: <FaTrophy className="w-5 h-5" />, check: <FaCheck className="w-5 h-5" />,
+    message: <MessageCircle className="w-5 h-5" />, medal: <FaMedal className="w-5 h-5" />,
   }
   return (
     <div className={cn('flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all duration-300', achievement.unlocked ? 'bg-accent/10 border-accent/40' : 'bg-muted/50 border-border opacity-50')}>
@@ -420,58 +535,69 @@ function TypingIndicator() {
 // ============================================================
 
 function CheckInModal({
-  isOpen,
-  onClose,
-  onComplete,
-  sessionId,
+  isOpen, onClose, onComplete, sessionId, period,
 }: {
   isOpen: boolean
   onClose: () => void
   onComplete: (data: any, agentResult: any) => void
   sessionId: string
+  period: CheckInPeriod
 }) {
   const [step, setStep] = useState(0)
   const [loading, setLoading] = useState(false)
   const [showResults, setShowResults] = useState(false)
+  const [showSuccess, setShowSuccess] = useState(false)
   const [agentResult, setAgentResult] = useState<any>(null)
   const [error, setError] = useState<string | null>(null)
 
   const [formData, setFormData] = useState({
-    sleepQuality: 5,
-    energyLevel: 5,
-    caffeineIntake: 0,
-    alcoholIntake: 0,
-    medsTaken: false,
+    sleepQuality: 5, energyLevel: 5, caffeineIntake: 0, alcoholIntake: 0,
+    medications: [] as MedicationEntry[],
     intimacy: false,
-    creativeTime: 0,
-    practicalTime: 0,
+    creativeTimeHours: 0, creativeTimeMinutes: 0,
+    practicalTimeHours: 0, practicalTimeMinutes: 0,
     moodNotes: '',
   })
+
+  const [customMedName, setCustomMedName] = useState('')
 
   const steps = [
     { title: 'Sleep Quality', subtitle: 'How well did you sleep last night?' },
     { title: 'Energy Level', subtitle: 'How is your energy right now?' },
-    { title: 'Caffeine', subtitle: 'How many cups of coffee/tea today?' },
+    { title: 'Espresso Shots', subtitle: 'How many espresso shots today?' },
     { title: 'Alcohol', subtitle: 'How many drinks today?' },
-    { title: 'Medications', subtitle: 'Did you take your meds today?' },
+    { title: 'Medications', subtitle: 'What did you take today?' },
     { title: 'Intimacy', subtitle: 'Any intimacy today?' },
-    { title: 'Creative Time', subtitle: 'Minutes spent on creative activities' },
-    { title: 'Practical Time', subtitle: 'Minutes spent on practical tasks' },
+    { title: 'Creative Time', subtitle: 'Time spent on creative activities' },
+    { title: 'Practical Time', subtitle: 'Time spent on practical tasks' },
     { title: 'Mood Notes', subtitle: 'How are you feeling? Any notes?' },
   ]
+
+  const periodLabel = period.charAt(0).toUpperCase() + period.slice(1)
 
   const handleSubmit = async () => {
     setLoading(true)
     setError(null)
-    const message = `Daily check-in: Sleep quality: ${formData.sleepQuality}/10, Energy: ${formData.energyLevel}/10, Caffeine: ${formData.caffeineIntake} cups, Alcohol: ${formData.alcoholIntake} drinks, Meds: ${formData.medsTaken ? 'yes' : 'no'}, Intimacy: ${formData.intimacy ? 'yes' : 'no'}, Creative time: ${formData.creativeTime} min, Practical time: ${formData.practicalTime} min, Mood notes: ${formData.moodNotes || 'No specific notes'}`
+    const creativeTotal = formData.creativeTimeHours * 60 + formData.creativeTimeMinutes
+    const practicalTotal = formData.practicalTimeHours * 60 + formData.practicalTimeMinutes
+    const medsStr = formData.medications.length > 0
+      ? formData.medications.map(m => `${m.name} ${m.dosageMg}mg at ${m.timeTaken}`).join(', ')
+      : 'none'
+    const sleepDesc = SLEEP_DESCRIPTIONS[formData.sleepQuality] ?? ''
+    const energyDesc = ENERGY_DESCRIPTIONS[formData.energyLevel] ?? ''
+    const message = `${periodLabel} check-in: Sleep quality: ${formData.sleepQuality}/10 (${sleepDesc}), Energy: ${formData.energyLevel}/10 (${energyDesc}), Caffeine: ${formData.caffeineIntake} espresso shots, Alcohol: ${formData.alcoholIntake} drinks, Medications: ${medsStr}, Intimacy: ${formData.intimacy ? 'yes' : 'no'}, Creative time: ${creativeTotal} min (${formatHoursMinutes(creativeTotal)}), Practical time: ${practicalTotal} min (${formatHoursMinutes(practicalTotal)}), Mood notes: ${formData.moodNotes || 'No specific notes'}`
 
     try {
       const result = await callAIAgent(message, CHECKIN_AGENT_ID, { session_id: sessionId })
       if (result?.success) {
         const parsed = parseAgentResult(result)
         setAgentResult(parsed)
-        setShowResults(true)
-        onComplete(formData, parsed)
+        setShowSuccess(true)
+        setTimeout(() => {
+          setShowSuccess(false)
+          setShowResults(true)
+        }, 2000)
+        onComplete({ ...formData, creativeTime: creativeTotal, practicalTime: practicalTotal, period }, parsed)
       } else {
         setError(result?.error ?? 'Failed to submit check-in. Please try again.')
       }
@@ -484,29 +610,86 @@ function CheckInModal({
   const handleReset = () => {
     setStep(0)
     setShowResults(false)
+    setShowSuccess(false)
     setAgentResult(null)
     setError(null)
     setFormData({
       sleepQuality: 5, energyLevel: 5, caffeineIntake: 0, alcoholIntake: 0,
-      medsTaken: false, intimacy: false, creativeTime: 0, practicalTime: 0, moodNotes: '',
+      medications: [], intimacy: false,
+      creativeTimeHours: 0, creativeTimeMinutes: 0,
+      practicalTimeHours: 0, practicalTimeMinutes: 0, moodNotes: '',
     })
+    setCustomMedName('')
     onClose()
+  }
+
+  const addMedication = (med: typeof MEDICATION_LIST[0]) => {
+    const exists = formData.medications.some(m => m.name === med.name)
+    if (exists) return
+    setFormData(prev => ({
+      ...prev,
+      medications: [...prev.medications, { name: med.name, generic: med.generic, dosageMg: 0, timeTaken: '08:00', duration: med.duration }],
+    }))
+  }
+
+  const removeMedication = (idx: number) => {
+    setFormData(prev => ({
+      ...prev,
+      medications: prev.medications.filter((_, i) => i !== idx),
+    }))
+  }
+
+  const updateMedication = (idx: number, field: 'dosageMg' | 'timeTaken', value: number | string) => {
+    setFormData(prev => ({
+      ...prev,
+      medications: prev.medications.map((m, i) => i === idx ? { ...m, [field]: value } : m),
+    }))
+  }
+
+  const addCustomMed = () => {
+    if (!customMedName.trim()) return
+    setFormData(prev => ({
+      ...prev,
+      medications: [...prev.medications, { name: customMedName.trim(), generic: customMedName.trim(), dosageMg: 0, timeTaken: '08:00', duration: { min: 4, max: 8 } }],
+    }))
+    setCustomMedName('')
   }
 
   if (!isOpen) return null
 
   return (
     <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col">
-      {/* Header */}
+      {showSuccess && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <div className="animate-checkin-success flex flex-col items-center gap-4">
+            <div className="w-24 h-24 rounded-full bg-[hsl(155,40%,25%)] flex items-center justify-center shadow-[0_0_40px_hsl(155,40%,30%)]">
+              <FaCheck className="w-12 h-12 text-[hsl(155,50%,70%)]" />
+            </div>
+            <p className="text-xl font-bold font-sans tracking-tight text-[hsl(155,50%,70%)]">Check-In Complete!</p>
+            <p className="text-sm text-muted-foreground">{periodLabel} check-in logged</p>
+          </div>
+          <style>{`
+            @keyframes checkinSuccess {
+              0% { transform: scale(0); opacity: 0; }
+              50% { transform: scale(1.15); opacity: 1; }
+              70% { transform: scale(0.95); }
+              100% { transform: scale(1); opacity: 1; }
+            }
+            .animate-checkin-success {
+              animation: checkinSuccess 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            }
+          `}</style>
+        </div>
+      )}
+
       <div className="flex items-center justify-between p-4 border-b border-border">
-        <h2 className="font-serif text-xl font-bold tracking-tight">Daily Check-In</h2>
+        <h2 className="font-sans text-xl font-extrabold tracking-tight">{periodLabel} Check-In</h2>
         <button onClick={handleReset} className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
           <X className="w-4 h-4" />
         </button>
       </div>
 
-      {/* Progress */}
-      {!showResults && (
+      {!showResults && !showSuccess && (
         <div className="px-4 pt-4">
           <div className="flex items-center gap-1 mb-2">
             {steps.map((_, i) => (
@@ -517,24 +700,19 @@ function CheckInModal({
         </div>
       )}
 
-      {/* Content */}
       <ScrollArea className="flex-1 p-4">
         {showResults ? (
           <div className="space-y-6 pb-20">
-            {/* Streak Update */}
             <Card className="bg-card border-accent/30 shadow-xl rounded-2xl overflow-hidden">
               <CardContent className="p-6 text-center">
                 <div className="w-20 h-20 rounded-full bg-accent/20 flex items-center justify-center mx-auto mb-4">
                   <FaFire className="w-10 h-10 text-accent" />
                 </div>
-                <h3 className="font-serif text-2xl font-bold tracking-tight mb-1">
-                  {agentResult?.streak_count ?? 0}-Day Streak
-                </h3>
+                <h3 className="font-sans text-2xl font-extrabold tracking-tight mb-1">{agentResult?.streak_count ?? 0}-Day Streak</h3>
                 <p className="text-muted-foreground text-sm">Keep showing up!</p>
               </CardContent>
             </Card>
 
-            {/* HP Update */}
             <Card className="bg-card border-border shadow-lg rounded-2xl">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-3">
@@ -548,32 +726,23 @@ function CheckInModal({
               </CardContent>
             </Card>
 
-            {/* Stats Summary */}
             {agentResult?.stats_summary && (
               <Card className="bg-card border-border shadow-lg rounded-2xl">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-semibold">Stats Summary</CardTitle>
-                </CardHeader>
+                <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold">Stats Summary</CardTitle></CardHeader>
                 <CardContent className="pt-0">{renderMarkdown(agentResult.stats_summary)}</CardContent>
               </Card>
             )}
 
-            {/* Mood Assessment */}
             {agentResult?.mood_assessment && (
               <Card className="bg-card border-border shadow-lg rounded-2xl">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-semibold flex items-center gap-2"><Smile className="w-4 h-4 text-accent" />Mood Assessment</CardTitle>
-                </CardHeader>
+                <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold flex items-center gap-2"><Smile className="w-4 h-4 text-accent" />Mood Assessment</CardTitle></CardHeader>
                 <CardContent className="pt-0"><p className="text-sm text-muted-foreground">{agentResult.mood_assessment}</p></CardContent>
               </Card>
             )}
 
-            {/* Pattern Insights */}
             {Array.isArray(agentResult?.pattern_insights) && agentResult.pattern_insights.length > 0 && (
               <Card className="bg-card border-border shadow-lg rounded-2xl">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-semibold flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-accent" />Pattern Insights</CardTitle>
-                </CardHeader>
+                <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-accent" />Pattern Insights</CardTitle></CardHeader>
                 <CardContent className="pt-0 space-y-3">
                   {agentResult.pattern_insights.map((p: PatternInsight, i: number) => (
                     <div key={i} className={cn('p-3 rounded-xl border', getSeverityColor(p?.severity))}>
@@ -586,7 +755,6 @@ function CheckInModal({
               </Card>
             )}
 
-            {/* Motivational Message */}
             {agentResult?.motivational_message && (
               <Card className="bg-accent/10 border-accent/30 shadow-lg rounded-2xl">
                 <CardContent className="p-6 text-center">
@@ -596,14 +764,12 @@ function CheckInModal({
               </Card>
             )}
 
-            <Button onClick={handleReset} className="w-full rounded-2xl h-12 bg-accent text-accent-foreground hover:bg-accent/90 font-semibold">
-              Close and Return to Dashboard
-            </Button>
+            <Button onClick={handleReset} className="w-full rounded-2xl h-12 bg-accent text-accent-foreground hover:bg-accent/90 font-semibold">Close and Return to Dashboard</Button>
           </div>
-        ) : (
+        ) : !showSuccess ? (
           <div className="space-y-6 pb-20">
             <div className="text-center py-4">
-              <h3 className="font-serif text-xl font-bold tracking-tight mb-1">{steps[step]?.title}</h3>
+              <h3 className="font-sans text-xl font-extrabold tracking-tight mb-1">{steps[step]?.title}</h3>
               <p className="text-sm text-muted-foreground">{steps[step]?.subtitle}</p>
             </div>
 
@@ -611,7 +777,6 @@ function CheckInModal({
               <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm">{error}</div>
             )}
 
-            {/* Step 0: Sleep Quality */}
             {step === 0 && (
               <div className="space-y-6">
                 <div className="text-center">
@@ -620,10 +785,10 @@ function CheckInModal({
                 </div>
                 <Slider value={[formData.sleepQuality]} onValueChange={([v]) => setFormData(prev => ({ ...prev, sleepQuality: v }))} min={1} max={10} step={1} className="w-full" />
                 <div className="flex justify-between text-xs text-muted-foreground"><span>Terrible</span><span>Amazing</span></div>
+                <p className="text-sm text-center text-muted-foreground mt-3 italic min-h-[1.5rem]">{SLEEP_DESCRIPTIONS[formData.sleepQuality]}</p>
               </div>
             )}
 
-            {/* Step 1: Energy Level */}
             {step === 1 && (
               <div className="space-y-6">
                 <div className="text-center">
@@ -632,16 +797,16 @@ function CheckInModal({
                 </div>
                 <Slider value={[formData.energyLevel]} onValueChange={([v]) => setFormData(prev => ({ ...prev, energyLevel: v }))} min={1} max={10} step={1} className="w-full" />
                 <div className="flex justify-between text-xs text-muted-foreground"><span>Exhausted</span><span>Energized</span></div>
+                <p className="text-sm text-center text-muted-foreground mt-3 italic min-h-[1.5rem]">{ENERGY_DESCRIPTIONS[formData.energyLevel]}</p>
               </div>
             )}
 
-            {/* Step 2: Caffeine */}
             {step === 2 && (
               <div className="space-y-6">
                 <div className="text-center">
                   <FaCoffee className="w-12 h-12 text-accent mx-auto mb-4" />
                   <p className="text-4xl font-bold mb-2">{formData.caffeineIntake}</p>
-                  <p className="text-sm text-muted-foreground">cups</p>
+                  <p className="text-sm text-muted-foreground">espresso shots</p>
                 </div>
                 <div className="flex items-center justify-center gap-4">
                   <Button variant="outline" size="icon" className="rounded-xl w-12 h-12" onClick={() => setFormData(prev => ({ ...prev, caffeineIntake: Math.max(0, prev.caffeineIntake - 1) }))} disabled={formData.caffeineIntake <= 0}>
@@ -655,7 +820,6 @@ function CheckInModal({
               </div>
             )}
 
-            {/* Step 3: Alcohol */}
             {step === 3 && (
               <div className="space-y-6">
                 <div className="text-center">
@@ -675,25 +839,57 @@ function CheckInModal({
               </div>
             )}
 
-            {/* Step 4: Medications */}
             {step === 4 && (
-              <div className="space-y-6">
+              <div className="space-y-4">
                 <div className="text-center">
                   <FaPills className="w-12 h-12 text-accent mx-auto mb-4" />
                 </div>
-                <div className="flex items-center justify-center gap-6">
-                  <Button variant={formData.medsTaken ? 'default' : 'outline'} className={cn('rounded-2xl h-16 w-28 text-lg font-semibold', formData.medsTaken && 'bg-accent text-accent-foreground')} onClick={() => setFormData(prev => ({ ...prev, medsTaken: true }))}>Yes</Button>
-                  <Button variant={!formData.medsTaken ? 'default' : 'outline'} className={cn('rounded-2xl h-16 w-28 text-lg font-semibold', !formData.medsTaken && 'bg-secondary text-secondary-foreground')} onClick={() => setFormData(prev => ({ ...prev, medsTaken: false }))}>No</Button>
+                <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+                  {MEDICATION_LIST.map((med) => {
+                    const isSelected = formData.medications.some(m => m.name === med.name)
+                    return (
+                      <button key={med.name} onClick={() => isSelected ? removeMedication(formData.medications.findIndex(m => m.name === med.name)) : addMedication(med)} className={cn('p-2 rounded-xl border text-left text-xs transition-all', isSelected ? 'bg-accent/20 border-accent/50 text-accent' : 'bg-muted/50 border-border text-muted-foreground hover:border-accent/30')}>
+                        <p className="font-semibold">{med.name}</p>
+                        <p className="text-[10px] opacity-70">{med.generic}</p>
+                      </button>
+                    )
+                  })}
                 </div>
+                <div className="flex gap-2">
+                  <Input value={customMedName} onChange={(e) => setCustomMedName(e.target.value)} placeholder="Other medication..." className="flex-1 rounded-xl bg-input border-border text-sm" />
+                  <Button variant="outline" size="sm" onClick={addCustomMed} disabled={!customMedName.trim()} className="rounded-xl">Add</Button>
+                </div>
+                {formData.medications.length > 0 && (
+                  <div className="space-y-3 mt-3">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase">Selected Medications</p>
+                    {formData.medications.map((med, idx) => (
+                      <div key={idx} className="bg-muted/50 rounded-xl p-3 border border-border">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-semibold">{med.name}</span>
+                          <button onClick={() => removeMedication(idx)} className="text-muted-foreground hover:text-red-400">
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <div className="flex gap-3">
+                          <div className="flex-1">
+                            <Label className="text-[10px] text-muted-foreground">Dosage (mg)</Label>
+                            <Input type="number" min={0} value={med.dosageMg} onChange={(e) => updateMedication(idx, 'dosageMg', parseInt(e.target.value) || 0)} className="h-8 text-sm rounded-lg bg-input border-border" />
+                          </div>
+                          <div className="flex-1">
+                            <Label className="text-[10px] text-muted-foreground">Time taken</Label>
+                            <Input type="time" value={med.timeTaken} onChange={(e) => updateMedication(idx, 'timeTaken', e.target.value)} className="h-8 text-sm rounded-lg bg-input border-border" />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
-            {/* Step 5: Intimacy */}
             {step === 5 && (
               <div className="space-y-6">
-                <div className="text-center">
-                  <FaHeart className="w-12 h-12 text-accent mx-auto mb-4" />
-                </div>
+                <div className="text-center"><FaHeart className="w-12 h-12 text-accent mx-auto mb-4" /></div>
                 <div className="flex items-center justify-center gap-6">
                   <Button variant={formData.intimacy ? 'default' : 'outline'} className={cn('rounded-2xl h-16 w-28 text-lg font-semibold', formData.intimacy && 'bg-accent text-accent-foreground')} onClick={() => setFormData(prev => ({ ...prev, intimacy: true }))}>Yes</Button>
                   <Button variant={!formData.intimacy ? 'default' : 'outline'} className={cn('rounded-2xl h-16 w-28 text-lg font-semibold', !formData.intimacy && 'bg-secondary text-secondary-foreground')} onClick={() => setFormData(prev => ({ ...prev, intimacy: false }))}>No</Button>
@@ -701,45 +897,53 @@ function CheckInModal({
               </div>
             )}
 
-            {/* Step 6: Creative Time */}
             {step === 6 && (
               <div className="space-y-6">
-                <div className="text-center">
-                  <FaMusic className="w-12 h-12 text-accent mx-auto mb-4" />
-                  <p className="text-4xl font-bold mb-2">{formData.creativeTime}</p>
-                  <p className="text-sm text-muted-foreground">minutes</p>
+                <div className="text-center"><FaMusic className="w-12 h-12 text-accent mx-auto mb-4" /></div>
+                <div className="flex items-center gap-3 justify-center">
+                  <div className="text-center">
+                    <Input type="number" min={0} max={12} value={formData.creativeTimeHours} onChange={(e) => setFormData(prev => ({ ...prev, creativeTimeHours: Math.min(12, Math.max(0, parseInt(e.target.value) || 0)) }))} className="w-20 text-center text-2xl h-14 rounded-2xl bg-input border-border" />
+                    <p className="text-xs text-muted-foreground mt-1">Hours</p>
+                  </div>
+                  <span className="text-2xl font-bold text-muted-foreground">:</span>
+                  <div className="text-center">
+                    <Input type="number" min={0} max={59} value={formData.creativeTimeMinutes} onChange={(e) => setFormData(prev => ({ ...prev, creativeTimeMinutes: Math.min(59, Math.max(0, parseInt(e.target.value) || 0)) }))} className="w-20 text-center text-2xl h-14 rounded-2xl bg-input border-border" />
+                    <p className="text-xs text-muted-foreground mt-1">Minutes</p>
+                  </div>
                 </div>
-                <Input type="number" min={0} max={480} value={formData.creativeTime} onChange={(e) => setFormData(prev => ({ ...prev, creativeTime: parseInt(e.target.value) || 0 }))} className="text-center text-2xl h-14 rounded-2xl bg-input border-border" placeholder="0" />
+                <p className="text-center text-sm text-muted-foreground">{formatHoursMinutes(formData.creativeTimeHours * 60 + formData.creativeTimeMinutes)}</p>
               </div>
             )}
 
-            {/* Step 7: Practical Time */}
             {step === 7 && (
               <div className="space-y-6">
-                <div className="text-center">
-                  <FaBriefcase className="w-12 h-12 text-accent mx-auto mb-4" />
-                  <p className="text-4xl font-bold mb-2">{formData.practicalTime}</p>
-                  <p className="text-sm text-muted-foreground">minutes</p>
+                <div className="text-center"><FaBriefcase className="w-12 h-12 text-accent mx-auto mb-4" /></div>
+                <div className="flex items-center gap-3 justify-center">
+                  <div className="text-center">
+                    <Input type="number" min={0} max={12} value={formData.practicalTimeHours} onChange={(e) => setFormData(prev => ({ ...prev, practicalTimeHours: Math.min(12, Math.max(0, parseInt(e.target.value) || 0)) }))} className="w-20 text-center text-2xl h-14 rounded-2xl bg-input border-border" />
+                    <p className="text-xs text-muted-foreground mt-1">Hours</p>
+                  </div>
+                  <span className="text-2xl font-bold text-muted-foreground">:</span>
+                  <div className="text-center">
+                    <Input type="number" min={0} max={59} value={formData.practicalTimeMinutes} onChange={(e) => setFormData(prev => ({ ...prev, practicalTimeMinutes: Math.min(59, Math.max(0, parseInt(e.target.value) || 0)) }))} className="w-20 text-center text-2xl h-14 rounded-2xl bg-input border-border" />
+                    <p className="text-xs text-muted-foreground mt-1">Minutes</p>
+                  </div>
                 </div>
-                <Input type="number" min={0} max={480} value={formData.practicalTime} onChange={(e) => setFormData(prev => ({ ...prev, practicalTime: parseInt(e.target.value) || 0 }))} className="text-center text-2xl h-14 rounded-2xl bg-input border-border" placeholder="0" />
+                <p className="text-center text-sm text-muted-foreground">{formatHoursMinutes(formData.practicalTimeHours * 60 + formData.practicalTimeMinutes)}</p>
               </div>
             )}
 
-            {/* Step 8: Mood Notes */}
             {step === 8 && (
               <div className="space-y-6">
-                <div className="text-center">
-                  <FaSmile className="w-12 h-12 text-accent mx-auto mb-4" />
-                </div>
+                <div className="text-center"><FaSmile className="w-12 h-12 text-accent mx-auto mb-4" /></div>
                 <Textarea value={formData.moodNotes} onChange={(e) => setFormData(prev => ({ ...prev, moodNotes: e.target.value }))} placeholder="How are you feeling today? Any thoughts to share..." rows={4} className="rounded-2xl bg-input border-border resize-none" />
               </div>
             )}
           </div>
-        )}
+        ) : null}
       </ScrollArea>
 
-      {/* Navigation */}
-      {!showResults && (
+      {!showResults && !showSuccess && (
         <div className="p-4 border-t border-border flex items-center gap-3">
           {step > 0 && (
             <Button variant="outline" onClick={() => setStep(s => s - 1)} className="rounded-2xl flex-1 h-12">
@@ -766,9 +970,9 @@ function CheckInModal({
 // ============================================================
 
 export default function Page() {
-  // --- State ---
   const [activeTab, setActiveTab] = useState<'dashboard' | 'chat' | 'history'>('dashboard')
   const [showCheckIn, setShowCheckIn] = useState(false)
+  const [checkInPeriod, setCheckInPeriod] = useState<CheckInPeriod>('morning')
   const [sampleMode, setSampleMode] = useState(false)
   const [appState, setAppState] = useState<AppState>(DEFAULT_STATE)
   const [activeAgentId, setActiveAgentId] = useState<string | null>(null)
@@ -781,22 +985,27 @@ export default function Page() {
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null)
   const chatEndRef = useRef<HTMLDivElement>(null)
   const [mounted, setMounted] = useState(false)
+  const [currentPeriod, setCurrentPeriod] = useState<CheckInPeriod>('morning')
+  const [dailyMantra, setDailyMantra] = useState(MANTRAS[0])
+  const [dailyWord, setDailyWord] = useState(WORDS_OF_DAY[0])
 
-  // Session ID
   const [sessionId] = useState(() => {
     if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('flowstate_session_id')
+      const stored = localStorage.getItem('creatr_session_id')
       if (stored) return stored
       const newId = crypto.randomUUID()
-      localStorage.setItem('flowstate_session_id', newId)
+      localStorage.setItem('creatr_session_id', newId)
       return newId
     }
     return ''
   })
 
-  // --- Load state from localStorage on mount ---
   useEffect(() => {
     setMounted(true)
+    setCurrentPeriod(getCurrentPeriod())
+    const dayIdx = getDayOfYear()
+    setDailyMantra(MANTRAS[dayIdx % MANTRAS.length])
+    setDailyWord(WORDS_OF_DAY[(dayIdx + 7) % WORDS_OF_DAY.length])
     if (typeof window !== 'undefined') {
       try {
         const stored = localStorage.getItem(STORAGE_KEY)
@@ -808,7 +1017,6 @@ export default function Page() {
     }
   }, [])
 
-  // --- Save state to localStorage ---
   useEffect(() => {
     if (mounted && typeof window !== 'undefined' && !sampleMode) {
       try {
@@ -817,15 +1025,27 @@ export default function Page() {
     }
   }, [appState, mounted, sampleMode])
 
-  // --- Scroll chat to bottom ---
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [appState.chatMessages, chatLoading])
 
-  // --- Compute display state ---
   const displayState = sampleMode ? SAMPLE_STATE : appState
 
-  // --- Check achievements ---
+  const todayCheckIns = (() => {
+    const today = getTodayStr()
+    if (displayState.todayCheckIns?.date === today) return displayState.todayCheckIns
+    return { date: today, morning: false, afternoon: false, evening: false }
+  })()
+
+  const latestMeds = (() => {
+    const history = displayState.checkInHistory
+    if (!Array.isArray(history) || history.length === 0) return []
+    const latest = history[0]
+    return Array.isArray(latest?.medications) ? latest.medications : []
+  })()
+
+  const medAlerts = latestMeds.length > 0 ? getMedAlerts(latestMeds) : []
+
   const checkAchievements = useCallback((state: AppState): Achievement[] => {
     const achs = [...state.achievements]
     const unlock = (id: string) => {
@@ -846,33 +1066,27 @@ export default function Page() {
     return achs
   }, [])
 
-  // --- Handle check-in complete ---
   const handleCheckInComplete = useCallback((formData: any, agentResult: any) => {
     const entry: CheckInEntry = {
-      id: generateId(),
-      date: new Date().toISOString(),
-      sleepQuality: formData.sleepQuality,
-      energyLevel: formData.energyLevel,
-      caffeineIntake: formData.caffeineIntake,
-      alcoholIntake: formData.alcoholIntake,
-      medsTaken: formData.medsTaken,
+      id: generateId(), date: new Date().toISOString(), period: formData.period ?? currentPeriod,
+      sleepQuality: formData.sleepQuality, energyLevel: formData.energyLevel,
+      caffeineIntake: formData.caffeineIntake, alcoholIntake: formData.alcoholIntake,
+      medications: Array.isArray(formData.medications) ? formData.medications : [],
       intimacy: formData.intimacy,
-      creativeTime: formData.creativeTime,
-      practicalTime: formData.practicalTime,
+      creativeTime: formData.creativeTime, practicalTime: formData.practicalTime,
       moodNotes: formData.moodNotes,
-      streakCount: agentResult?.streak_count,
-      hpValue: agentResult?.hp_value,
-      hpMax: agentResult?.hp_max,
-      shieldCount: agentResult?.shield_count,
+      streakCount: agentResult?.streak_count, hpValue: agentResult?.hp_value,
+      hpMax: agentResult?.hp_max, shieldCount: agentResult?.shield_count,
       patternInsights: Array.isArray(agentResult?.pattern_insights) ? agentResult.pattern_insights : [],
       motivationalMessage: agentResult?.motivational_message,
-      statsSummary: agentResult?.stats_summary,
-      moodAssessment: agentResult?.mood_assessment,
+      statsSummary: agentResult?.stats_summary, moodAssessment: agentResult?.mood_assessment,
     }
-
     const newPatterns = Array.isArray(agentResult?.pattern_insights) ? agentResult.pattern_insights : []
+    const entryPeriod: CheckInPeriod = formData.period ?? currentPeriod
 
     setAppState(prev => {
+      const today = getTodayStr()
+      const prevTodayCheckIns = prev.todayCheckIns?.date === today ? prev.todayCheckIns : { date: today, morning: false, afternoon: false, evening: false }
       const newState: AppState = {
         ...prev,
         streak: agentResult?.streak_count ?? prev.streak,
@@ -892,32 +1106,28 @@ export default function Page() {
         },
         motivationalMessage: agentResult?.motivational_message ?? prev.motivationalMessage,
         achievements: prev.achievements,
+        todayCheckIns: { ...prevTodayCheckIns, [entryPeriod]: true },
       }
       newState.achievements = checkAchievements(newState)
       return newState
     })
-  }, [checkAchievements])
+  }, [checkAchievements, currentPeriod])
 
-  // --- Get Suggestions ---
   const handleGetSuggestions = useCallback(async () => {
     setSuggestionsLoading(true)
     setSuggestionsError(null)
     setActiveAgentId(COACH_AGENT_ID)
-
     const energy = displayState.stats.energyLevel ?? 'unknown'
     const creative = displayState.stats.creativeTime ?? 0
     const message = `I need suggestions based on my current state. My recent energy has been ${energy}/10 and I've logged ${creative} min of creative time. What should I focus on right now?`
-
     try {
       const result = await callAIAgent(message, COACH_AGENT_ID, { session_id: sessionId })
       if (result?.success) {
         const parsed = parseAgentResult(result)
         const suggestions = Array.isArray(parsed?.suggestions)
-          ? parsed.suggestions.map((s: any) => ({ ...s, done: false, skipped: false }))
-          : []
+          ? parsed.suggestions.map((s: any) => ({ ...s, done: false, skipped: false })) : []
         setAppState(prev => ({
-          ...prev,
-          suggestions,
+          ...prev, suggestions,
           coachingNote: parsed?.coaching_note ?? prev.coachingNote,
           energyAssessment: parsed?.overall_energy_assessment ?? prev.energyAssessment,
         }))
@@ -931,34 +1141,22 @@ export default function Page() {
     setSuggestionsLoading(false)
   }, [displayState.stats, sessionId])
 
-  // --- Chat Send ---
   const handleSendChat = useCallback(async () => {
     const trimmed = chatInput.trim()
     if (!trimmed || chatLoading) return
-
-    const userMsg: ChatMessage = {
-      id: generateId(),
-      role: 'user',
-      content: trimmed,
-      timestamp: new Date().toISOString(),
-    }
-
+    const userMsg: ChatMessage = { id: generateId(), role: 'user', content: trimmed, timestamp: new Date().toISOString() }
     setAppState(prev => ({ ...prev, chatMessages: [...prev.chatMessages, userMsg] }))
     setChatInput('')
     setChatLoading(true)
     setChatError(null)
     setActiveAgentId(ORACLE_AGENT_ID)
-
     const contextPrefix = `[Context: User streak=${displayState.streak}, energy=${displayState.stats.energyLevel ?? 'unknown'}, HP=${displayState.hp}/${displayState.hpMax}] `
-    const fullMessage = contextPrefix + trimmed
-
     try {
-      const result = await callAIAgent(fullMessage, ORACLE_AGENT_ID, { session_id: sessionId })
+      const result = await callAIAgent(contextPrefix + trimmed, ORACLE_AGENT_ID, { session_id: sessionId })
       if (result?.success) {
         const parsed = parseAgentResult(result)
         const assistantMsg: ChatMessage = {
-          id: generateId(),
-          role: 'assistant',
+          id: generateId(), role: 'assistant',
           content: parsed?.response_text ?? 'I hear you. Let me think about that.',
           timestamp: new Date().toISOString(),
           isIntervention: parsed?.is_intervention === true,
@@ -983,7 +1181,6 @@ export default function Page() {
     setChatLoading(false)
   }, [chatInput, chatLoading, displayState, sessionId, checkAchievements])
 
-  // --- Mark suggestion done/skip ---
   const handleSuggestionAction = useCallback((idx: number, action: 'done' | 'skip') => {
     setAppState(prev => {
       const newSugs = [...prev.suggestions]
@@ -996,6 +1193,11 @@ export default function Page() {
     })
   }, [checkAchievements])
 
+  const openCheckIn = (p: CheckInPeriod) => {
+    setCheckInPeriod(p)
+    setShowCheckIn(true)
+  }
+
   // ============================================================
   // RENDER
   // ============================================================
@@ -1003,15 +1205,12 @@ export default function Page() {
   return (
     <ErrorBoundary>
       <div className="min-h-screen bg-background text-foreground font-sans flex flex-col">
-        {/* ============ TOP HEADER ============ */}
+        {/* TOP HEADER */}
         <header className="sticky top-0 z-40 bg-background/90 backdrop-blur-md border-b border-border px-4 py-3">
           <div className="max-w-lg mx-auto flex items-center justify-between">
-            {/* Left: Brand */}
             <div className="flex items-center gap-2">
-              <h1 className="font-serif text-xl font-extrabold tracking-tight">FlowState</h1>
+              <h1 className="font-sans text-xl font-extrabold tracking-tight">Creatr</h1>
             </div>
-
-            {/* Center: Streak */}
             <div className="flex items-center gap-1.5">
               <div className="relative">
                 <FaFire className={cn('w-5 h-5', displayState.streak > 0 ? 'text-accent' : 'text-muted-foreground')} />
@@ -1019,8 +1218,6 @@ export default function Page() {
               </div>
               <span className="font-bold text-sm">{displayState.streak}</span>
             </div>
-
-            {/* Right: HP + Sample Toggle */}
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1.5">
                 <FaShieldAlt className="w-3.5 h-3.5 text-accent" />
@@ -1037,15 +1234,17 @@ export default function Page() {
           </div>
         </header>
 
-        {/* ============ MAIN CONTENT ============ */}
+        {/* MAIN CONTENT */}
         <main className="flex-1 overflow-y-auto pb-24">
           <div className="max-w-lg mx-auto px-4 py-4">
 
-            {/* -------- DASHBOARD TAB -------- */}
+            {/* DASHBOARD TAB */}
             {activeTab === 'dashboard' && (
-              <div className="space-y-6">
-                {/* Hero Streak Card */}
-                <Card className="bg-card border-border shadow-xl rounded-2xl overflow-hidden">
+              <div className="relative space-y-6">
+                <div className="absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-[hsl(155,20%,8%)] to-transparent pointer-events-none" />
+
+                {/* Streak Card */}
+                <Card className="relative bg-card border-border shadow-xl rounded-2xl overflow-hidden">
                   <CardContent className="p-6">
                     <div className="flex items-center gap-4">
                       <div className="relative">
@@ -1053,73 +1252,132 @@ export default function Page() {
                           <FaFire className={cn('w-8 h-8', displayState.streak > 0 ? 'text-accent' : 'text-muted-foreground')} />
                         </div>
                         {displayState.streak > 0 && (
-                          <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-accent text-accent-foreground flex items-center justify-center text-xs font-bold shadow-lg shadow-accent/30">
-                            {displayState.streak}
-                          </div>
+                          <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-accent text-accent-foreground flex items-center justify-center text-xs font-bold shadow-lg shadow-accent/30">{displayState.streak}</div>
                         )}
                       </div>
                       <div className="flex-1">
-                        <h2 className="font-serif text-2xl font-extrabold tracking-tight">
+                        <h2 className="font-sans text-2xl font-extrabold tracking-tight">
                           {displayState.streak > 0 ? `${displayState.streak}-Day Streak` : 'Start Your Streak'}
                         </h2>
-                        <p className="text-sm text-muted-foreground">
-                          {displayState.streak > 0 ? 'Keep the momentum going!' : 'Complete a check-in to begin'}
-                        </p>
+                        <p className="text-sm text-muted-foreground">{displayState.streak > 0 ? 'Keep the momentum going!' : 'Complete a check-in to begin'}</p>
                       </div>
                     </div>
-
-                    {/* HP Bar */}
                     <div className="mt-4">
                       <div className="flex items-center justify-between mb-1.5">
                         <div className="flex items-center gap-2">
                           <FaShieldAlt className="w-3.5 h-3.5 text-accent" />
                           <span className="text-xs font-semibold">HP {displayState.hp}/{displayState.hpMax}</span>
                         </div>
-                        <Badge variant="secondary" className="text-[10px]">
-                          <Shield className="w-3 h-3 mr-1" />{displayState.shields} Shields
-                        </Badge>
+                        <Badge variant="secondary" className="text-[10px]"><Shield className="w-3 h-3 mr-1" />{displayState.shields} Shields</Badge>
                       </div>
                       <Progress value={((displayState.hp) / (displayState.hpMax || 100)) * 100} className="h-3 rounded-full" />
                     </div>
                   </CardContent>
                 </Card>
 
+                {/* Daily Mantra */}
+                <Card className="relative bg-card/60 border-border shadow-md rounded-2xl">
+                  <CardContent className="p-5 text-center">
+                    <p className="text-sm font-medium italic text-foreground/80 leading-relaxed">"{dailyMantra?.quote}"</p>
+                    <p className="text-xs text-muted-foreground mt-2">-- {dailyMantra?.author}</p>
+                  </CardContent>
+                </Card>
+
+                {/* Word of the Day */}
+                <div className="relative flex items-center gap-3 px-4 py-3 bg-card/40 rounded-2xl border border-border/50">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-accent">{dailyWord?.word}</span>
+                      <span className="text-[11px] text-muted-foreground italic">/{dailyWord?.pronunciation}/</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{dailyWord?.definition}</p>
+                  </div>
+                </div>
+
                 {/* Stats Grid */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="relative grid grid-cols-2 gap-3">
                   <StatCard icon={<FaBed className="w-4 h-4" />} value={displayState.stats.sleepQuality} label="Sleep Quality" unit="/10" />
                   <StatCard icon={<FaBolt className="w-4 h-4" />} value={displayState.stats.energyLevel} label="Energy Level" unit="/10" />
-                  <StatCard icon={<FaCoffee className="w-4 h-4" />} value={displayState.stats.caffeineIntake} label="Caffeine" unit=" cups" />
-                  <StatCard icon={<FaMusic className="w-4 h-4" />} value={displayState.stats.creativeTime} label="Creative Time" unit=" min" />
-                  <StatCard icon={<FaBriefcase className="w-4 h-4" />} value={displayState.stats.practicalTime} label="Practical Time" unit=" min" />
+                  <StatCard icon={<FaCoffee className="w-4 h-4" />} value={displayState.stats.caffeineIntake} label="Espresso Shots" />
+                  <StatCard icon={<FaMusic className="w-4 h-4" />} value={displayState.stats.creativeTime != null ? formatHoursMinutes(displayState.stats.creativeTime) : null} label="Creative Time" />
+                  <StatCard icon={<FaBriefcase className="w-4 h-4" />} value={displayState.stats.practicalTime != null ? formatHoursMinutes(displayState.stats.practicalTime) : null} label="Practical Time" />
                   <StatCard icon={<FaSmile className="w-4 h-4" />} value={displayState.stats.mood ? (displayState.stats.mood.length > 15 ? displayState.stats.mood.substring(0, 15) + '...' : displayState.stats.mood) : null} label="Mood" />
                 </div>
 
-                {/* Action CTAs */}
-                <div className="grid grid-cols-2 gap-3">
-                  <Button onClick={() => setShowCheckIn(true)} className="h-14 rounded-2xl bg-accent text-accent-foreground hover:bg-accent/90 font-semibold shadow-lg shadow-accent/20 text-sm">
-                    <Sparkles className="w-4 h-4 mr-2" /> Daily Check-In
-                  </Button>
-                  <Button onClick={handleGetSuggestions} disabled={suggestionsLoading} variant="outline" className="h-14 rounded-2xl border-2 border-accent/30 hover:bg-accent/10 font-semibold text-sm">
+                {/* Check-In Period Buttons */}
+                <div className="relative">
+                  <h3 className="font-sans text-lg font-extrabold tracking-tight mb-3">Check-In</h3>
+                  <div className="grid grid-cols-3 gap-3">
+                    {([
+                      { p: 'morning' as CheckInPeriod, icon: <FaSun className="w-5 h-5" />, label: 'Morning', time: '6am-12pm' },
+                      { p: 'afternoon' as CheckInPeriod, icon: <FaCloudSun className="w-5 h-5" />, label: 'Afternoon', time: '12pm-6pm' },
+                      { p: 'evening' as CheckInPeriod, icon: <FaMoon className="w-5 h-5" />, label: 'Evening', time: '6pm-12am' },
+                    ]).map(({ p, icon, label, time }) => {
+                      const isDone = todayCheckIns[p] === true
+                      const isCurrent = currentPeriod === p
+                      return (
+                        <button key={p} onClick={() => openCheckIn(p)} disabled={sampleMode} className={cn('relative flex flex-col items-center gap-1.5 p-4 rounded-2xl border-2 transition-all duration-300', isCurrent && !isDone ? 'border-accent/60 bg-accent/10' : 'border-border bg-card', isDone && 'opacity-70')}>
+                          {isCurrent && !isDone && (
+                            <Badge className="absolute -top-2 right-1 text-[9px] bg-accent text-accent-foreground px-1.5 py-0">Now</Badge>
+                          )}
+                          {isDone && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-card/80 rounded-2xl">
+                              <FaCheck className="w-6 h-6 text-green-400" />
+                            </div>
+                          )}
+                          <div className="text-accent">{icon}</div>
+                          <span className="text-xs font-semibold">{label}</span>
+                          <span className="text-[10px] text-muted-foreground">{time}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Get Suggestions */}
+                <div className="relative">
+                  <Button onClick={handleGetSuggestions} disabled={suggestionsLoading} variant="outline" className="w-full h-14 rounded-2xl border-2 border-accent/30 hover:bg-accent/10 font-semibold text-sm">
                     {suggestionsLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FaLightbulb className="w-4 h-4 mr-2 text-accent" />}
                     Get Suggestions
                   </Button>
                 </div>
 
                 {suggestionsError && (
-                  <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm">{suggestionsError}</div>
+                  <div className="relative p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm">{suggestionsError}</div>
+                )}
+
+                {/* Medication Alert Card */}
+                {medAlerts.length > 0 && (
+                  <Card className="relative bg-card border-border shadow-lg rounded-2xl">
+                    <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold flex items-center gap-2"><FaPills className="w-4 h-4 text-accent" />Medication Status</CardTitle></CardHeader>
+                    <CardContent className="pt-0 space-y-2">
+                      {medAlerts.map((alert, i) => (
+                        <div key={i} className={cn('flex items-center justify-between p-2 rounded-xl border text-xs', alert.status === 'active' ? 'bg-green-500/10 border-green-500/30 text-green-400' : alert.status === 'wearing_off' ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' : 'bg-muted/50 border-border text-muted-foreground')}>
+                          <div>
+                            <span className="font-semibold">{alert.med.name}</span>
+                            <span className="ml-1 opacity-70">{alert.med.dosageMg}mg</span>
+                          </div>
+                          <div className="text-right">
+                            <Badge variant="outline" className={cn('text-[10px]', alert.status === 'active' ? 'border-green-500/30 text-green-400' : alert.status === 'wearing_off' ? 'border-amber-500/30 text-amber-400' : 'border-border text-muted-foreground')}>
+                              {alert.status === 'active' ? 'Active' : alert.status === 'wearing_off' ? 'Wearing Off' : 'Worn Off'}
+                            </Badge>
+                            <p className="text-[10px] opacity-70 mt-0.5">{alert.wearOffTime}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
                 )}
 
                 {/* Suggestions */}
                 {(displayState.suggestions?.length ?? 0) > 0 && (
-                  <div className="space-y-3">
-                    <h3 className="font-serif text-lg font-bold tracking-tight flex items-center gap-2">
+                  <div className="relative space-y-3">
+                    <h3 className="font-sans text-lg font-extrabold tracking-tight flex items-center gap-2">
                       <FaLightbulb className="w-4 h-4 text-accent" /> Suggestions
                     </h3>
-
                     {displayState.energyAssessment && (
                       <p className="text-xs text-muted-foreground bg-muted/50 p-3 rounded-xl">{displayState.energyAssessment}</p>
                     )}
-
                     {Array.isArray(displayState.suggestions) && displayState.suggestions.map((sug, i) => {
                       const catStyle = getCategoryStyle(sug?.category)
                       const isDone = sug?.done === true
@@ -1133,31 +1391,19 @@ export default function Page() {
                             </div>
                             <p className="text-xs text-muted-foreground mb-2">{sug?.description ?? ''}</p>
                             <div className="flex items-center gap-2 mb-3 flex-wrap">
-                              <Badge variant="secondary" className="text-[10px]">
-                                <Clock className="w-3 h-3 mr-1" />{sug?.time_estimate ?? ''}
-                              </Badge>
+                              <Badge variant="secondary" className="text-[10px]"><Clock className="w-3 h-3 mr-1" />{sug?.time_estimate ?? ''}</Badge>
                               {sug?.priority && (
-                                <Badge variant="secondary" className={cn('text-[10px]', sug.priority === 'high' ? 'text-amber-400' : 'text-muted-foreground')}>
-                                  {sug.priority} priority
-                                </Badge>
+                                <Badge variant="secondary" className={cn('text-[10px]', sug.priority === 'high' ? 'text-amber-400' : 'text-muted-foreground')}>{sug.priority} priority</Badge>
                               )}
                             </div>
-                            {sug?.reasoning && (
-                              <p className="text-[11px] text-muted-foreground italic mb-2">{sug.reasoning}</p>
-                            )}
+                            {sug?.reasoning && <p className="text-[11px] text-muted-foreground italic mb-2">{sug.reasoning}</p>}
                             {sug?.trending_relevance && sug.trending_relevance !== 'N/A' && (
-                              <p className="text-[11px] text-accent/80 mb-3">
-                                <Sparkles className="w-3 h-3 inline mr-1" />{sug.trending_relevance}
-                              </p>
+                              <p className="text-[11px] text-accent/80 mb-3"><Sparkles className="w-3 h-3 inline mr-1" />{sug.trending_relevance}</p>
                             )}
                             {!isDone && !isSkipped && !sampleMode && (
                               <div className="flex items-center gap-2">
-                                <Button size="sm" onClick={() => handleSuggestionAction(i, 'done')} className="rounded-xl h-8 bg-accent text-accent-foreground hover:bg-accent/90 text-xs flex-1">
-                                  <FaCheck className="w-3 h-3 mr-1" /> Done
-                                </Button>
-                                <Button size="sm" variant="outline" onClick={() => handleSuggestionAction(i, 'skip')} className="rounded-xl h-8 text-xs flex-1">
-                                  <FaTimes className="w-3 h-3 mr-1" /> Skip
-                                </Button>
+                                <Button size="sm" onClick={() => handleSuggestionAction(i, 'done')} className="rounded-xl h-8 bg-accent text-accent-foreground hover:bg-accent/90 text-xs flex-1"><FaCheck className="w-3 h-3 mr-1" /> Done</Button>
+                                <Button size="sm" variant="outline" onClick={() => handleSuggestionAction(i, 'skip')} className="rounded-xl h-8 text-xs flex-1"><FaTimes className="w-3 h-3 mr-1" /> Skip</Button>
                               </div>
                             )}
                             {isDone && <p className="text-xs text-green-400 font-medium"><FaCheck className="w-3 h-3 inline mr-1" />Completed</p>}
@@ -1166,7 +1412,6 @@ export default function Page() {
                         </Card>
                       )
                     })}
-
                     {displayState.coachingNote && (
                       <Card className="bg-accent/5 border-accent/20 shadow-lg rounded-2xl">
                         <CardContent className="p-4">
@@ -1178,9 +1423,9 @@ export default function Page() {
                   </div>
                 )}
 
-                {/* Latest Pattern Insight */}
+                {/* Latest Pattern */}
                 {(displayState.patternHistory?.length ?? 0) > 0 && (
-                  <Card className={cn('border-2 shadow-lg rounded-2xl', getSeverityColor(displayState.patternHistory?.[0]?.severity))}>
+                  <Card className={cn('relative border-2 shadow-lg rounded-2xl', getSeverityColor(displayState.patternHistory?.[0]?.severity))}>
                     <CardContent className="p-4">
                       <div className="flex items-center gap-2 mb-2">
                         <AlertTriangle className="w-4 h-4" />
@@ -1192,9 +1437,9 @@ export default function Page() {
                   </Card>
                 )}
 
-                {/* Motivational Message */}
+                {/* Motivational */}
                 {displayState.motivationalMessage && (
-                  <Card className="bg-accent/5 border-accent/20 shadow-lg rounded-2xl">
+                  <Card className="relative bg-accent/5 border-accent/20 shadow-lg rounded-2xl">
                     <CardContent className="p-6 text-center">
                       <Sparkles className="w-5 h-5 text-accent mx-auto mb-2" />
                       <p className="text-sm font-medium italic text-muted-foreground">{displayState.motivationalMessage}</p>
@@ -1202,27 +1447,28 @@ export default function Page() {
                   </Card>
                 )}
 
-                {/* Empty state when no data */}
+                {/* Empty state */}
                 {!sampleMode && displayState.streak === 0 && (displayState.checkInHistory?.length ?? 0) === 0 && (
-                  <Card className="bg-card border-border shadow-lg rounded-2xl">
+                  <Card className="relative bg-card border-border shadow-lg rounded-2xl">
                     <CardContent className="p-8 text-center">
                       <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
                         <Sparkles className="w-8 h-8 text-muted-foreground" />
                       </div>
-                      <h3 className="font-serif text-lg font-bold tracking-tight mb-2">Welcome to FlowState</h3>
+                      <h3 className="font-sans text-lg font-extrabold tracking-tight mb-2">Welcome to Creatr</h3>
                       <p className="text-sm text-muted-foreground mb-4">Track your daily habits, get AI-powered coaching, and build momentum with streaks and HP.</p>
-                      <p className="text-xs text-accent">Tap "Daily Check-In" above to start your journey</p>
+                      <p className="text-xs text-accent">Choose a check-in period above to start your journey</p>
                     </CardContent>
                   </Card>
                 )}
               </div>
             )}
 
-            {/* -------- CHAT TAB -------- */}
+            {/* CHAT TAB */}
             {activeTab === 'chat' && (
-              <div className="flex flex-col" style={{ minHeight: 'calc(100vh - 180px)' }}>
-                {/* Context Bar */}
-                <div className="flex items-center gap-3 p-3 bg-card rounded-2xl border border-border shadow-md mb-4">
+              <div className="relative flex flex-col" style={{ minHeight: 'calc(100vh - 180px)' }}>
+                <div className="absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-[hsl(210,25%,8%)] to-transparent pointer-events-none" />
+
+                <div className="relative flex items-center gap-3 p-3 bg-card rounded-2xl border border-border shadow-md mb-4">
                   <div className="flex items-center gap-1.5">
                     <FaFire className={cn('w-3.5 h-3.5', displayState.streak > 0 ? 'text-accent' : 'text-muted-foreground')} />
                     <span className="text-xs font-semibold">{displayState.streak}-day streak</span>
@@ -1239,15 +1485,14 @@ export default function Page() {
                   </div>
                 </div>
 
-                {/* Messages */}
-                <ScrollArea className="flex-1 pr-1">
+                <ScrollArea className="relative flex-1 pr-1">
                   <div className="space-y-4 pb-4">
                     {(displayState.chatMessages?.length ?? 0) === 0 && (
                       <div className="text-center py-12">
                         <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
                           <MessageCircle className="w-8 h-8 text-muted-foreground" />
                         </div>
-                        <h3 className="font-serif text-lg font-bold tracking-tight mb-2">Chat with the Oracle</h3>
+                        <h3 className="font-sans text-lg font-extrabold tracking-tight mb-2">Chat with the Oracle</h3>
                         <p className="text-sm text-muted-foreground max-w-xs mx-auto">Ask anything - life advice, creative ideas, or just vent. The Oracle listens and guides.</p>
                       </div>
                     )}
@@ -1256,11 +1501,8 @@ export default function Page() {
                       <div key={msg.id} className={cn('flex', msg.role === 'user' ? 'justify-end' : 'justify-start')}>
                         <div className={cn('max-w-[85%] rounded-2xl p-4', msg.role === 'user' ? 'bg-accent text-accent-foreground' : msg.isIntervention ? 'bg-card border-l-4 border-amber-500 shadow-lg' : 'bg-card border border-border shadow-md')}>
                           {msg.isIntervention && msg.interventionType !== 'none' && (
-                            <Badge className="mb-2 bg-amber-500/20 text-amber-400 border-amber-500/30 text-[10px]">
-                              <AlertTriangle className="w-3 h-3 mr-1" />{msg.interventionType}
-                            </Badge>
+                            <Badge className="mb-2 bg-amber-500/20 text-amber-400 border-amber-500/30 text-[10px]"><AlertTriangle className="w-3 h-3 mr-1" />{msg.interventionType}</Badge>
                           )}
-
                           {msg.isIntervention && msg.interventionMessage ? (
                             <div className="space-y-2">
                               <div className="text-sm font-medium text-amber-400">{renderMarkdown(msg.interventionMessage)}</div>
@@ -1270,57 +1512,36 @@ export default function Page() {
                           ) : (
                             <div className="text-sm">{msg.role === 'assistant' ? renderMarkdown(msg.content) : msg.content}</div>
                           )}
-
-                          {/* Action items */}
                           {Array.isArray(msg.actionItems) && msg.actionItems.length > 0 && (
                             <div className="mt-3 space-y-1.5">
                               <p className="text-[10px] font-semibold uppercase text-accent">Action Items</p>
                               {msg.actionItems.map((item, i) => (
-                                <div key={i} className="flex items-start gap-2 text-xs">
-                                  <Target className="w-3 h-3 mt-0.5 text-accent shrink-0" />
-                                  <span>{item}</span>
-                                </div>
+                                <div key={i} className="flex items-start gap-2 text-xs"><Target className="w-3 h-3 mt-0.5 text-accent shrink-0" /><span>{item}</span></div>
                               ))}
                             </div>
                           )}
-
-                          {/* Topics */}
                           {Array.isArray(msg.topicsExplored) && msg.topicsExplored.length > 0 && (
                             <div className="mt-2 flex flex-wrap gap-1">
-                              {msg.topicsExplored.map((t, i) => (
-                                <Badge key={i} variant="secondary" className="text-[10px]">{t}</Badge>
-                              ))}
+                              {msg.topicsExplored.map((t, i) => <Badge key={i} variant="secondary" className="text-[10px]">{t}</Badge>)}
                             </div>
                           )}
-
-                          {/* Mood */}
                           {msg.conversationMood && msg.role === 'assistant' && (
                             <p className="text-[10px] text-muted-foreground mt-2 italic">Mood: {msg.conversationMood}</p>
                           )}
-
                           <p className="text-[10px] text-muted-foreground/60 mt-2">{formatTime(msg.timestamp)}</p>
                         </div>
                       </div>
                     ))}
 
-                    {/* Intervention quick replies */}
                     {Array.isArray(displayState.chatMessages) && displayState.chatMessages.length > 0 && displayState.chatMessages[displayState.chatMessages.length - 1]?.isIntervention && !chatLoading && (
                       <div className="flex gap-2 justify-start pl-2">
-                        <Button size="sm" variant="outline" className="rounded-xl text-xs border-accent/30 hover:bg-accent/10" onClick={() => { setChatInput("You're right, let me focus"); }}>
-                          You are right, let me focus
-                        </Button>
-                        <Button size="sm" variant="outline" className="rounded-xl text-xs border-border" onClick={() => { setChatInput("I hear you, but I need to explore this"); }}>
-                          I need to explore this
-                        </Button>
+                        <Button size="sm" variant="outline" className="rounded-xl text-xs border-accent/30 hover:bg-accent/10" onClick={() => { setChatInput("You're right, let me focus"); }}>You are right, let me focus</Button>
+                        <Button size="sm" variant="outline" className="rounded-xl text-xs border-border" onClick={() => { setChatInput("I hear you, but I need to explore this"); }}>I need to explore this</Button>
                       </div>
                     )}
 
                     {chatLoading && (
-                      <div className="flex justify-start">
-                        <div className="bg-card border border-border rounded-2xl shadow-md">
-                          <TypingIndicator />
-                        </div>
-                      </div>
+                      <div className="flex justify-start"><div className="bg-card border border-border rounded-2xl shadow-md"><TypingIndicator /></div></div>
                     )}
 
                     {chatError && (
@@ -1331,8 +1552,7 @@ export default function Page() {
                   </div>
                 </ScrollArea>
 
-                {/* Input */}
-                <div className="sticky bottom-20 bg-background pt-2">
+                <div className="relative sticky bottom-20 bg-background pt-2">
                   <div className="flex items-center gap-2">
                     <Input value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Ask the Oracle anything..." className="flex-1 rounded-2xl h-12 bg-card border-border pr-12" onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendChat(); } }} disabled={chatLoading || sampleMode} />
                     <Button onClick={handleSendChat} disabled={!chatInput.trim() || chatLoading || sampleMode} size="icon" className="rounded-2xl w-12 h-12 bg-accent text-accent-foreground hover:bg-accent/90 shrink-0">
@@ -1343,24 +1563,19 @@ export default function Page() {
               </div>
             )}
 
-            {/* -------- HISTORY TAB -------- */}
+            {/* HISTORY TAB */}
             {activeTab === 'history' && (
-              <div className="space-y-4">
+              <div className="relative space-y-4">
+                <div className="absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-[hsl(28,20%,7%)] to-transparent pointer-events-none" />
+
                 <Tabs value={historyTab} onValueChange={(v) => setHistoryTab(v as 'logs' | 'patterns' | 'achievements')}>
-                  <TabsList className="w-full bg-card border border-border rounded-2xl h-11">
-                    <TabsTrigger value="logs" className="flex-1 rounded-xl text-xs font-semibold data-[state=active]:bg-accent data-[state=active]:text-accent-foreground">
-                      <FaHistory className="w-3.5 h-3.5 mr-1.5" />Logs
-                    </TabsTrigger>
-                    <TabsTrigger value="patterns" className="flex-1 rounded-xl text-xs font-semibold data-[state=active]:bg-accent data-[state=active]:text-accent-foreground">
-                      <AlertTriangle className="w-3.5 h-3.5 mr-1.5" />Patterns
-                    </TabsTrigger>
-                    <TabsTrigger value="achievements" className="flex-1 rounded-xl text-xs font-semibold data-[state=active]:bg-accent data-[state=active]:text-accent-foreground">
-                      <FaTrophy className="w-3.5 h-3.5 mr-1.5" />Achievements
-                    </TabsTrigger>
+                  <TabsList className="relative w-full bg-card border border-border rounded-2xl h-11">
+                    <TabsTrigger value="logs" className="flex-1 rounded-xl text-xs font-semibold data-[state=active]:bg-accent data-[state=active]:text-accent-foreground"><FaHistory className="w-3.5 h-3.5 mr-1.5" />Logs</TabsTrigger>
+                    <TabsTrigger value="patterns" className="flex-1 rounded-xl text-xs font-semibold data-[state=active]:bg-accent data-[state=active]:text-accent-foreground"><AlertTriangle className="w-3.5 h-3.5 mr-1.5" />Patterns</TabsTrigger>
+                    <TabsTrigger value="achievements" className="flex-1 rounded-xl text-xs font-semibold data-[state=active]:bg-accent data-[state=active]:text-accent-foreground"><FaTrophy className="w-3.5 h-3.5 mr-1.5" />Achievements</TabsTrigger>
                   </TabsList>
 
-                  {/* Logs */}
-                  <TabsContent value="logs" className="mt-4 space-y-3">
+                  <TabsContent value="logs" className="relative mt-4 space-y-3">
                     {(displayState.checkInHistory?.length ?? 0) === 0 && (
                       <Card className="bg-card border-border shadow-lg rounded-2xl">
                         <CardContent className="p-8 text-center">
@@ -1371,37 +1586,36 @@ export default function Page() {
                     )}
                     {Array.isArray(displayState.checkInHistory) && displayState.checkInHistory.map((entry) => {
                       const isExpanded = expandedLogId === entry.id
+                      const entryMeds = Array.isArray(entry.medications) ? entry.medications : []
                       return (
                         <Card key={entry.id} className="bg-card border-border shadow-lg rounded-2xl">
                           <CardContent className="p-4">
                             <button onClick={() => setExpandedLogId(isExpanded ? null : entry.id)} className="w-full flex items-center justify-between">
                               <div className="text-left">
-                                <p className="text-sm font-semibold">{formatDate(entry.date)}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  Sleep: {entry.sleepQuality}/10 | Energy: {entry.energyLevel}/10 | Creative: {entry.creativeTime}min
-                                </p>
+                                <div className="flex items-center gap-2">
+                                  <p className="text-sm font-semibold">{formatDate(entry.date)}</p>
+                                  {entry.period && <Badge variant="secondary" className="text-[10px]">{entry.period}</Badge>}
+                                </div>
+                                <p className="text-xs text-muted-foreground">Sleep: {entry.sleepQuality}/10 | Energy: {entry.energyLevel}/10 | Creative: {formatHoursMinutes(entry.creativeTime)}</p>
                               </div>
                               <div className="flex items-center gap-2">
                                 {(entry.streakCount ?? 0) > 0 && (
-                                  <Badge variant="secondary" className="text-[10px]">
-                                    <FaFire className="w-2.5 h-2.5 mr-1 text-accent" />{entry.streakCount}
-                                  </Badge>
+                                  <Badge variant="secondary" className="text-[10px]"><FaFire className="w-2.5 h-2.5 mr-1 text-accent" />{entry.streakCount}</Badge>
                                 )}
                                 {isExpanded ? <FaChevronUp className="w-3 h-3 text-muted-foreground" /> : <FaChevronDown className="w-3 h-3 text-muted-foreground" />}
                               </div>
                             </button>
-
                             {isExpanded && (
                               <div className="mt-4 pt-4 border-t border-border space-y-3">
                                 <div className="grid grid-cols-2 gap-2 text-xs">
                                   <div className="bg-muted/50 rounded-xl p-2"><span className="text-muted-foreground">Sleep:</span> <span className="font-semibold">{entry.sleepQuality}/10</span></div>
                                   <div className="bg-muted/50 rounded-xl p-2"><span className="text-muted-foreground">Energy:</span> <span className="font-semibold">{entry.energyLevel}/10</span></div>
-                                  <div className="bg-muted/50 rounded-xl p-2"><span className="text-muted-foreground">Caffeine:</span> <span className="font-semibold">{entry.caffeineIntake} cups</span></div>
+                                  <div className="bg-muted/50 rounded-xl p-2"><span className="text-muted-foreground">Espresso:</span> <span className="font-semibold">{entry.caffeineIntake} shots</span></div>
                                   <div className="bg-muted/50 rounded-xl p-2"><span className="text-muted-foreground">Alcohol:</span> <span className="font-semibold">{entry.alcoholIntake} drinks</span></div>
-                                  <div className="bg-muted/50 rounded-xl p-2"><span className="text-muted-foreground">Meds:</span> <span className="font-semibold">{entry.medsTaken ? 'Yes' : 'No'}</span></div>
+                                  <div className="bg-muted/50 rounded-xl p-2"><span className="text-muted-foreground">Meds:</span> <span className="font-semibold">{entryMeds.length > 0 ? entryMeds.map(m => m.name).join(', ') : 'None'}</span></div>
                                   <div className="bg-muted/50 rounded-xl p-2"><span className="text-muted-foreground">Intimacy:</span> <span className="font-semibold">{entry.intimacy ? 'Yes' : 'No'}</span></div>
-                                  <div className="bg-muted/50 rounded-xl p-2"><span className="text-muted-foreground">Creative:</span> <span className="font-semibold">{entry.creativeTime} min</span></div>
-                                  <div className="bg-muted/50 rounded-xl p-2"><span className="text-muted-foreground">Practical:</span> <span className="font-semibold">{entry.practicalTime} min</span></div>
+                                  <div className="bg-muted/50 rounded-xl p-2"><span className="text-muted-foreground">Creative:</span> <span className="font-semibold">{formatHoursMinutes(entry.creativeTime)}</span></div>
+                                  <div className="bg-muted/50 rounded-xl p-2"><span className="text-muted-foreground">Practical:</span> <span className="font-semibold">{formatHoursMinutes(entry.practicalTime)}</span></div>
                                 </div>
                                 {entry.moodNotes && (
                                   <div className="bg-muted/50 rounded-xl p-3">
@@ -1431,9 +1645,7 @@ export default function Page() {
                                     ))}
                                   </div>
                                 )}
-                                {entry.statsSummary && (
-                                  <p className="text-xs text-muted-foreground">{entry.statsSummary}</p>
-                                )}
+                                {entry.statsSummary && <p className="text-xs text-muted-foreground">{entry.statsSummary}</p>}
                               </div>
                             )}
                           </CardContent>
@@ -1442,8 +1654,7 @@ export default function Page() {
                     })}
                   </TabsContent>
 
-                  {/* Patterns */}
-                  <TabsContent value="patterns" className="mt-4 space-y-3">
+                  <TabsContent value="patterns" className="relative mt-4 space-y-3">
                     {(displayState.patternHistory?.length ?? 0) === 0 && (
                       <Card className="bg-card border-border shadow-lg rounded-2xl">
                         <CardContent className="p-8 text-center">
@@ -1465,8 +1676,7 @@ export default function Page() {
                     ))}
                   </TabsContent>
 
-                  {/* Achievements */}
-                  <TabsContent value="achievements" className="mt-4">
+                  <TabsContent value="achievements" className="relative mt-4">
                     <div className="grid grid-cols-3 gap-3">
                       {Array.isArray(displayState.achievements) && displayState.achievements.map((ach) => (
                         <AchievementBadge key={ach.id} achievement={ach} />
@@ -1484,7 +1694,7 @@ export default function Page() {
           </div>
         </main>
 
-        {/* ============ AGENT STATUS FOOTER ============ */}
+        {/* AGENT STATUS FOOTER */}
         <div className="max-w-lg mx-auto px-4 pb-2 w-full">
           <div className="bg-card/80 backdrop-blur-sm border border-border rounded-2xl p-3 mb-2">
             <div className="flex items-center justify-between">
@@ -1508,26 +1718,26 @@ export default function Page() {
           </div>
         </div>
 
-        {/* ============ BOTTOM TAB BAR ============ */}
+        {/* BOTTOM TAB BAR */}
         <nav className="sticky bottom-0 z-40 bg-background/90 backdrop-blur-md border-t border-border">
           <div className="max-w-lg mx-auto flex items-center justify-around h-16 px-4">
-            <button onClick={() => setActiveTab('dashboard')} className={cn('flex flex-col items-center gap-1 transition-colors', activeTab === 'dashboard' ? 'text-accent' : 'text-muted-foreground hover:text-foreground')}>
+            <button onClick={() => setActiveTab('dashboard')} className={cn('flex flex-col items-center gap-1 transition-colors', activeTab === 'dashboard' ? 'text-[hsl(155,50%,50%)]' : 'text-muted-foreground hover:text-foreground')}>
               <Home className="w-5 h-5" />
               <span className="text-[10px] font-medium">Dashboard</span>
             </button>
-            <button onClick={() => setActiveTab('chat')} className={cn('flex flex-col items-center gap-1 transition-colors', activeTab === 'chat' ? 'text-accent' : 'text-muted-foreground hover:text-foreground')}>
+            <button onClick={() => setActiveTab('chat')} className={cn('flex flex-col items-center gap-1 transition-colors', activeTab === 'chat' ? 'text-[hsl(210,60%,55%)]' : 'text-muted-foreground hover:text-foreground')}>
               <MessageCircle className="w-5 h-5" />
               <span className="text-[10px] font-medium">Chat</span>
             </button>
-            <button onClick={() => setActiveTab('history')} className={cn('flex flex-col items-center gap-1 transition-colors', activeTab === 'history' ? 'text-accent' : 'text-muted-foreground hover:text-foreground')}>
+            <button onClick={() => setActiveTab('history')} className={cn('flex flex-col items-center gap-1 transition-colors', activeTab === 'history' ? 'text-[hsl(28,75%,55%)]' : 'text-muted-foreground hover:text-foreground')}>
               <Clock className="w-5 h-5" />
               <span className="text-[10px] font-medium">History</span>
             </button>
           </div>
         </nav>
 
-        {/* ============ CHECK-IN MODAL ============ */}
-        <CheckInModal isOpen={showCheckIn} onClose={() => setShowCheckIn(false)} onComplete={handleCheckInComplete} sessionId={sessionId} />
+        {/* CHECK-IN MODAL */}
+        <CheckInModal isOpen={showCheckIn} onClose={() => setShowCheckIn(false)} onComplete={handleCheckInComplete} sessionId={sessionId} period={checkInPeriod} />
       </div>
     </ErrorBoundary>
   )
